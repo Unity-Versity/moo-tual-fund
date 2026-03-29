@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🐄 Moo-tual Fund
+
+A dead-simple Next.js app for splitting a whole steer among Aussie households. Track the cow's journey, claim your slots, pick your cuts, and pay up — no drama.
 
 ## Getting Started
 
-First, run the development server:
+### 1. Set up Supabase
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Create a [Supabase](https://supabase.com) project, then run `supabase/schema.sql` in the SQL editor to create all tables and seed data.
+
+Create an admin user in Supabase Auth (Authentication → Users → Add user) with email and password.
+
+### 2. Configure Environment
+
+Copy `.env.local` and fill in your Supabase credentials:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SESSION_SECRET=any-random-string
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Run Locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+### 4. Deploy
 
-To learn more about Next.js, take a look at the following resources:
+Push to GitHub and connect to [Vercel](https://vercel.com). Add env vars in project settings.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How It Works
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Admin** logs in via Supabase Auth (email/password) at `/login → Admin login`
+- **Households** get a 6-digit PIN from the admin, enter it at `/login`
+- Admin creates households, manages cuts, tracks expenses/payments at `/admin`
+- Households claim slots, view their cuts, pick mince prep options at `/my-order`
+- Everyone sees the full cost breakdown at `/costs`
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 15 (App Router)
+- Supabase (Postgres + Auth)
+- Tailwind CSS v4 + shadcn/ui
+- TypeScript
