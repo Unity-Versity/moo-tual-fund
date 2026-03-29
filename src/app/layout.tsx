@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Moo-tual Fund | Split a Steer, Share the Steaks",
+  title: "Moo-tual Fund",
   description:
-    "A dead-simple way for Aussie households to split a whole steer. Track the cow, claim your slots, pick your cuts, and pay up.",
+    "Split a steer with mates. Track it, claim your slot, sort your order.",
 };
 
 export const viewport: Viewport = {
@@ -62,7 +62,7 @@ export default async function RootLayout({
       <body className="flex min-h-full flex-col">
         <Nav session={session} />
         <StatusBanner status={cowStatus} />
-        <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6">
+        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6">
           {children}
         </main>
         <footer className="border-t py-4 text-center text-xs text-muted-foreground">

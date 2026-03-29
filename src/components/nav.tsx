@@ -32,7 +32,7 @@ export function Nav({ session }: { session: SessionData | null }) {
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
+      <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg text-primary">
           <Beef className="h-6 w-6" />
           <span>Moo-tual Fund</span>

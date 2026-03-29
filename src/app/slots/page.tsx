@@ -15,32 +15,43 @@ async function getData() {
   ]);
 
   return {
-    slots: (slotsRes.data ?? []) as (Slot & { household: { id: string; name: string } | null })[],
+    slots: (slotsRes.data ?? []) as (Slot & {
+      household: { id: string; name: string } | null;
+    })[],
     status: statusRes.data as CowStatus | null,
   };
 }
 
 export default async function SlotsPage() {
-  const { slots, status } = await getData();
+  const { slots } = await getData();
   const session = await getSession();
 
-  const estPerSlot = status?.total_take_home_kg
-    ? (status.total_take_home_kg / 8).toFixed(1)
-    : status?.hanging_weight_kg
-      ? ((status.hanging_weight_kg * 0.65) / 8).toFixed(1)
-      : "~50";
+  const claimed = slots.filter((s) => s.is_claimed).length;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">Stake Your Steak 🥩</h1>
+        <h1 className="text-2xl font-bold">Slots</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Each slot is 1/8th of the steer — roughly {estPerSlot}kg of premium beef.
-          Claim as many as you like!
+          Each slot is an equal share of the steer. Grab as many as you need.
         </p>
       </div>
 
       <SlotGrid slots={slots} session={session} />
+
+      {claimed >= 8 && (
+        <p className="text-center text-sm text-muted-foreground">
+          All slots filled! If there&apos;s still demand we can add another
+          beast — more shares means the cost per slot drops for everyone.
+        </p>
+      )}
+
+      {claimed > 0 && claimed < 8 && (
+        <p className="text-center text-xs text-muted-foreground">
+          If all slots fill and there&apos;s more demand, we can add another
+          beast and the per-slot cost drops.
+        </p>
+      )}
     </div>
   );
 }

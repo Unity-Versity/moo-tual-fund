@@ -10,7 +10,7 @@ export function StatusBanner({ status }: { status: CowStatus | null }) {
 
   return (
     <div className="bg-primary/10 border-b border-primary/20">
-      <div className="mx-auto flex max-w-lg items-start gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-2xl items-start gap-3 px-4 py-3">
         <Megaphone className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-primary">

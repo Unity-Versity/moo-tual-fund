@@ -5,5 +5,5 @@ alter table public.households add column if not exists is_admin boolean not null
 -- This PIN is what you'll enter to access the admin login
 -- Change the PIN to whatever you want!
 insert into public.households (name, pin_code, is_admin)
-values ('Admin', '000000', true)
+values ('Admin', '008410', true)
 on conflict (pin_code) do update set is_admin = true;
