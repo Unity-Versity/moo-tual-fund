@@ -8,6 +8,7 @@ create table if not exists public.households (
   pin_code text not null unique,
   contact_info text,
   is_active boolean not null default true,
+  is_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
 

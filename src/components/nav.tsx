@@ -19,11 +19,16 @@ export function Nav({ session }: { session: SessionData | null }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
+  if (!session) return null;
+
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
+    router.push("/login");
     router.refresh();
   }
+
+  const displayName =
+    session.type === "household" ? session.household_name : "Admin";
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-sm">
@@ -42,23 +47,20 @@ export function Nav({ session }: { session: SessionData | null }) {
         </button>
 
         <div className="hidden items-center gap-1 md:flex">
-          {NAV_ITEMS.map((item) => {
-            if (item.href === "/my-order" && !session) return null;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  pathname === item.href
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-          {session?.type === "admin" && (
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                pathname === item.href
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+          {session.type === "admin" && (
             <Link
               href="/admin"
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -70,42 +72,31 @@ export function Nav({ session }: { session: SessionData | null }) {
               Admin
             </Link>
           )}
-          {session ? (
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-2">
-              <LogOut className="mr-1 h-4 w-4" />
-              Out
-            </Button>
-          ) : (
-            <Link href="/login">
-              <Button variant="outline" size="sm" className="ml-2">
-                Login
-              </Button>
-            </Link>
-          )}
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-2">
+            <LogOut className="mr-1 h-4 w-4" />
+            {displayName}
+          </Button>
         </div>
       </div>
 
       {open && (
         <div className="border-t px-4 pb-4 pt-2 md:hidden">
           <div className="flex flex-col gap-1">
-            {NAV_ITEMS.map((item) => {
-              if (item.href === "/my-order" && !session) return null;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    pathname === item.href
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-            {session?.type === "admin" && (
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  pathname === item.href
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+            {session.type === "admin" && (
               <Link
                 href="/admin"
                 onClick={() => setOpen(false)}
@@ -119,23 +110,13 @@ export function Nav({ session }: { session: SessionData | null }) {
               </Link>
             )}
             <div className="mt-2 border-t pt-2">
-              {session ? (
-                <button
-                  onClick={() => { setOpen(false); handleLogout(); }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
-                >
-                  <LogOut className="h-4 w-4" />
-                  {session.type === "household" ? `Logout (${session.household_name})` : "Logout (Admin)"}
-                </button>
-              ) : (
-                <Link
-                  href="/login"
-                  onClick={() => setOpen(false)}
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-accent hover:bg-secondary"
-                >
-                  Login
-                </Link>
-              )}
+              <button
+                onClick={() => { setOpen(false); handleLogout(); }}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout ({displayName})
+              </button>
             </div>
           </div>
         </div>

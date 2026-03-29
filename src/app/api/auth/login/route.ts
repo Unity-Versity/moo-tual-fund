@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const supabase = await createServiceRoleClient();
   const { data: household, error } = await supabase
     .from("households")
-    .select("id, name, is_active")
+    .select("id, name, is_active, is_admin")
     .eq("pin_code", pin)
     .single();
 
@@ -34,6 +34,11 @@ export async function POST(request: NextRequest) {
       { error: "This household has been deactivated. Contact the admin." },
       { status: 403 }
     );
+  }
+
+  // Admin PIN → don't create session yet, just signal the client to show admin auth
+  if (household.is_admin) {
+    return NextResponse.json({ admin_redirect: true });
   }
 
   await setSession({

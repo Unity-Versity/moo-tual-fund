@@ -195,22 +195,12 @@ export default async function HomePage() {
             </Button>
           </Link>
         )}
-        {session && (
-          <Link href="/my-order">
-            <Button variant="outline" className="w-full" size="lg">
-              View My Order
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
-        )}
-        {!session && (
-          <Link href="/login">
-            <Button variant="outline" className="w-full" size="lg">
-              Got an invite code? Login
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
-        )}
+        <Link href="/my-order">
+          <Button variant="outline" className="w-full" size="lg">
+            View My Order
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        </Link>
       </div>
 
       {/* Who's In */}

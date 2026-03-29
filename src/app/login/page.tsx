@@ -1,25 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Beef, Lock, ArrowLeft } from "lucide-react";
-import { Suspense } from "react";
 
-function LoginForm() {
+export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const isAdminMode = searchParams.get("admin") === "1";
 
   const [pin, setPin] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showAdmin, setShowAdmin] = useState(isAdminMode);
+  const [showAdminAuth, setShowAdminAuth] = useState(false);
 
   async function handlePinLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +36,13 @@ function LoginForm() {
         return;
       }
 
-      router.push("/my-order");
+      if (data.admin_redirect) {
+        setShowAdminAuth(true);
+        setPin("");
+        return;
+      }
+
+      router.push("/");
       router.refresh();
     } catch {
       setError("Something went wrong. Try again!");
@@ -75,7 +78,7 @@ function LoginForm() {
     }
   }
 
-  if (showAdmin) {
+  if (showAdminAuth) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center">
         <Card className="w-full max-w-sm">
@@ -83,8 +86,10 @@ function LoginForm() {
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Lock className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle>Admin Login</CardTitle>
-            <CardDescription>The boss is here. 🤠</CardDescription>
+            <CardTitle>The Boss is Here 🤠</CardTitle>
+            <CardDescription>
+              Confirm your identity, ranch master.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAdminLogin} className="space-y-4">
@@ -95,7 +100,6 @@ function LoginForm() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@mootualfund.com"
                   required
                   autoFocus
                 />
@@ -114,15 +118,20 @@ function LoginForm() {
                 <p className="text-sm text-destructive">{error}</p>
               )}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Checking credentials..." : "Login"}
+                {loading ? "Verifying..." : "Let Me In"}
               </Button>
             </form>
             <button
-              onClick={() => setShowAdmin(false)}
+              onClick={() => {
+                setShowAdminAuth(false);
+                setError("");
+                setEmail("");
+                setPassword("");
+              }}
               className="mt-4 flex w-full items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-3 w-3" />
-              Back to household login
+              Back
             </button>
           </CardContent>
         </Card>
@@ -166,22 +175,8 @@ function LoginForm() {
               {loading ? "Checking the paddock..." : "Let's Go! 🐄"}
             </Button>
           </form>
-          <button
-            onClick={() => setShowAdmin(true)}
-            className="mt-4 flex w-full items-center justify-center text-xs text-muted-foreground hover:text-foreground"
-          >
-            Admin login
-          </button>
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
   );
 }

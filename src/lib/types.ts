@@ -36,6 +36,7 @@ export interface Household {
   pin_code: string;
   contact_info: string | null;
   is_active: boolean;
+  is_admin: boolean;
   created_at: string;
 }
 

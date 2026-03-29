@@ -34,24 +34,32 @@ async function verifyAndDecode(raw: string, secret: string) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const sessionCookie = request.cookies.get(COOKIE_NAME)?.value;
+
+  // Public routes — no auth required
+  if (
+    pathname === "/login" ||
+    pathname.startsWith("/api/auth/")
+  ) {
+    return NextResponse.next();
+  }
 
   const secret = process.env.SESSION_SECRET;
   if (!secret) {
     return NextResponse.next();
   }
 
+  const sessionCookie = request.cookies.get(COOKIE_NAME)?.value;
   const session = sessionCookie ? await verifyAndDecode(sessionCookie, secret) : null;
 
-  if (pathname.startsWith("/admin")) {
-    if (!session || session.type !== "admin") {
-      return NextResponse.redirect(new URL("/login?admin=1", request.url));
-    }
+  // No session at all → login
+  if (!session) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (pathname.startsWith("/my-order")) {
-    if (!session || (session.type !== "household" && session.type !== "admin")) {
-      return NextResponse.redirect(new URL("/login", request.url));
+  // Admin routes require admin session
+  if (pathname.startsWith("/admin")) {
+    if (session.type !== "admin") {
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
@@ -59,5 +67,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/my-order/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };
