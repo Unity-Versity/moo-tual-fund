@@ -20,7 +20,7 @@ async function getData() {
     supabase.from("expenses").select("*").order("created_at"),
     supabase.from("payments").select("*, household:households(name)").order("payment_date"),
     supabase.from("slots").select("*, household:households(id, name)").order("slot_number"),
-    supabase.from("households").select("*").eq("is_active", true),
+    supabase.from("households_safe").select("*").eq("is_active", true),
   ]);
 
   return {

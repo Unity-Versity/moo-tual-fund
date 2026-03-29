@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ export function SuggestionForm({ suggestions }: { suggestions: Suggestion[] }) {
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!message.trim()) return;
 

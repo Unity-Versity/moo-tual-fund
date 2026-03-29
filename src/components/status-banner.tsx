@@ -14,7 +14,7 @@ export function StatusBanner({ status }: { status: CowStatus | null }) {
         <Megaphone className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-primary">
-            {STAGE_LABELS[status.stage]}
+            {STAGE_LABELS[status.stage] ?? status.stage}
           </p>
           {status.banner_message && (
             <p className="mt-0.5 text-sm text-foreground/80">

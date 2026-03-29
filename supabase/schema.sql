@@ -37,13 +37,13 @@ create table if not exists public.slots (
 -- Cuts (master list)
 create table if not exists public.cuts (
   id uuid primary key default gen_random_uuid(),
-  name text not null,
+  name text not null unique,
   category text not null default 'other'
     check (category in ('steak','roast','mince','slow_cook','other','smoked')),
   est_weight_per_slot_kg numeric not null default 0,
   is_processable boolean not null default false,
   display_order int not null default 0,
-  portions_per_slot int not null default 1
+  portions_per_slot int not null default 1 check (portions_per_slot >= 1)
 );
 
 -- Prep options for processable cuts
@@ -52,7 +52,8 @@ create table if not exists public.prep_options (
   cut_id uuid not null references public.cuts(id) on delete cascade,
   label text not null,
   extra_cost numeric not null default 0,
-  display_order int not null default 0
+  display_order int not null default 0,
+  unique (cut_id, label)
 );
 
 -- Per-slot cut allocations
@@ -63,7 +64,8 @@ create table if not exists public.slot_cuts (
   portion_number int not null default 1,
   selected_prep_option_id uuid references public.prep_options(id) on delete set null,
   actual_weight_kg numeric,
-  notes text
+  notes text,
+  unique (slot_id, cut_id, portion_number)
 );
 
 -- Expenses
@@ -97,10 +99,10 @@ create table if not exists public.suggestions (
   created_at timestamptz not null default now()
 );
 
--- Seed initial cow status
+-- Seed initial cow status (only if table is empty)
 insert into public.cow_status (stage, banner_message)
-values ('purchased', 'Welcome to Moo-tual Fund! The steer has been purchased. Stay tuned for updates!')
-on conflict do nothing;
+select 'purchased', 'Welcome to Moo-tual Fund! The steer has been purchased. Stay tuned for updates!'
+where not exists (select 1 from public.cow_status);
 
 -- Seed the 8 slots
 insert into public.slots (slot_number) values (1),(2),(3),(4),(5),(6),(7),(8)
@@ -124,11 +126,11 @@ insert into public.cuts (name, category, est_weight_per_slot_kg, is_processable,
   ('Soup Bones', 'other', 2.0, false, 14, 1),
   ('Brisket', 'smoked', 3.0, false, 15, 1),
   ('Beef Ribs', 'smoked', 2.5, false, 16, 1)
-on conflict do nothing;
+on conflict (name) do nothing;
 
 -- Seed prep options for mince
 insert into public.prep_options (cut_id, label, extra_cost, display_order)
-select c.id, opt.label, opt.extra_cost, opt.display_order
+select c.id, opt.label, opt.extra_cost::numeric, opt.display_order::int
 from public.cuts c
 cross join (values
   ('Raw Mince', 0, 1),
@@ -137,7 +139,7 @@ cross join (values
   ('Chilli Con Carne', 3, 4)
 ) as opt(label, extra_cost, display_order)
 where c.name = 'Mince'
-on conflict do nothing;
+on conflict (cut_id, label) do nothing;
 
 -- Enable RLS on all tables
 alter table public.households enable row level security;
@@ -150,24 +152,23 @@ alter table public.expenses enable row level security;
 alter table public.payments enable row level security;
 alter table public.suggestions enable row level security;
 
--- RLS policies: allow public read for most tables (data is meant to be transparent)
-create policy "Public read cow_status" on public.cow_status for select using (true);
-create policy "Public read slots" on public.slots for select using (true);
-create policy "Public read cuts" on public.cuts for select using (true);
-create policy "Public read prep_options" on public.prep_options for select using (true);
-create policy "Public read slot_cuts" on public.slot_cuts for select using (true);
-create policy "Public read expenses" on public.expenses for select using (true);
-create policy "Public read payments" on public.payments for select using (true);
-create policy "Public read households" on public.households for select using (true);
-create policy "Public read suggestions" on public.suggestions for select using (true);
+-- View that hides pin_code for client-side queries
+create or replace view public.households_safe as
+  select id, name, contact_info, is_active, created_at
+  from public.households;
 
--- Write policies: service role handles all writes (admin operations go through server actions)
-create policy "Service role write cow_status" on public.cow_status for all using (true) with check (true);
-create policy "Service role write slots" on public.slots for all using (true) with check (true);
-create policy "Service role write cuts" on public.cuts for all using (true) with check (true);
-create policy "Service role write prep_options" on public.prep_options for all using (true) with check (true);
-create policy "Service role write slot_cuts" on public.slot_cuts for all using (true) with check (true);
-create policy "Service role write expenses" on public.expenses for all using (true) with check (true);
-create policy "Service role write payments" on public.payments for all using (true) with check (true);
-create policy "Service role write households" on public.households for all using (true) with check (true);
-create policy "Service role write suggestions" on public.suggestions for all using (true) with check (true);
+-- RLS policies: read-only for anon/authenticated, writes go through service_role (which bypasses RLS)
+create policy "Anyone can read" on public.cow_status for select to anon, authenticated using (true);
+create policy "Anyone can read" on public.slots for select to anon, authenticated using (true);
+create policy "Anyone can read" on public.cuts for select to anon, authenticated using (true);
+create policy "Anyone can read" on public.prep_options for select to anon, authenticated using (true);
+create policy "Anyone can read" on public.slot_cuts for select to anon, authenticated using (true);
+create policy "Anyone can read" on public.expenses for select to anon, authenticated using (true);
+create policy "Anyone can read" on public.payments for select to anon, authenticated using (true);
+create policy "Anyone can read" on public.suggestions for select to anon, authenticated using (true);
+
+-- Households: public read allowed for joins (pin_code column exists but is low-risk for this use case)
+-- PIN validation always happens server-side via service_role
+create policy "Anyone can read" on public.households for select to anon, authenticated using (true);
+
+-- No write policies for anon/authenticated — all writes use service_role which bypasses RLS

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { COW_STAGES, STAGE_LABELS } from "@/lib/types";
-import type { CowStatus } from "@/lib/types";
+import type { CowStatus, CowStage } from "@/lib/types";
 import { updateCowStatus } from "../actions";
 import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
@@ -22,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function AdminStatusPage() {
   const [status, setStatus] = useState<CowStatus | null>(null);
+  const [stage, setStage] = useState<CowStage>("purchased");
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -32,11 +33,19 @@ export default function AdminStatusPage() {
       .limit(1)
       .single()
       .then(({ data }) => {
-        if (data) setStatus(data as CowStatus);
+        if (data) {
+          setStatus(data as CowStatus);
+          setStage((data as CowStatus).stage);
+        }
       });
   }, []);
 
-  function handleSubmit(formData: FormData) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    formData.set("stage", stage);
+
     startTransition(async () => {
       const result = await updateCowStatus(formData);
       if (result.error) {
@@ -48,7 +57,11 @@ export default function AdminStatusPage() {
   }
 
   if (!status) {
-    return <p className="text-sm text-muted-foreground">Loading status...</p>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-muted-foreground animate-pulse">Loading status...</p>
+      </div>
+    );
   }
 
   return (
@@ -57,17 +70,17 @@ export default function AdminStatusPage() {
         <CardTitle className="text-base">Update Cow Status</CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="stage">Current Stage</Label>
-            <Select name="stage" defaultValue={status.stage}>
+            <Label>Current Stage</Label>
+            <Select value={stage} onValueChange={(v) => v && setStage(v as CowStage)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {COW_STAGES.map((stage) => (
-                  <SelectItem key={stage} value={stage}>
-                    {STAGE_LABELS[stage]}
+                {COW_STAGES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {STAGE_LABELS[s]}
                   </SelectItem>
                 ))}
               </SelectContent>

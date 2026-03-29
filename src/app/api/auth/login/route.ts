@@ -3,9 +3,15 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { setSession } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
-  const { pin } = await request.json();
+  let body: { pin?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
-  if (!pin || typeof pin !== "string") {
+  const pin = typeof body.pin === "string" ? body.pin.trim() : "";
+  if (!pin) {
     return NextResponse.json({ error: "PIN is required" }, { status: 400 });
   }
 
@@ -13,7 +19,7 @@ export async function POST(request: NextRequest) {
   const { data: household, error } = await supabase
     .from("households")
     .select("id, name, is_active")
-    .eq("pin_code", pin.trim())
+    .eq("pin_code", pin)
     .single();
 
   if (error || !household) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,9 @@ const CATEGORIES = [
 
 export default function AdminExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [category, setCategory] = useState("Animal Purchase");
   const [isPending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
 
   function loadExpenses() {
     const supabase = createClient();
@@ -49,13 +51,19 @@ export default function AdminExpensesPage() {
 
   const total = expenses.reduce((s, e) => s + Number(e.amount), 0);
 
-  function handleAdd(formData: FormData) {
+  function handleAdd(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    formData.set("category", category);
+
     startTransition(async () => {
       const result = await addExpense(formData);
       if (result.error) {
         toast.error(result.error);
       } else {
         toast.success("Expense added!");
+        formRef.current?.reset();
+        setCategory("Animal Purchase");
         loadExpenses();
       }
     });
@@ -80,7 +88,7 @@ export default function AdminExpensesPage() {
           <CardTitle className="text-base">Add Expense</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={handleAdd} className="space-y-3">
+          <form ref={formRef} onSubmit={handleAdd} className="space-y-3">
             <div className="space-y-2">
               <Label>Description</Label>
               <Input name="description" placeholder="e.g. Steer purchase" required />
@@ -98,7 +106,7 @@ export default function AdminExpensesPage() {
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select name="category" defaultValue="Animal Purchase">
+                <Select value={category} onValueChange={(v) => v && setCategory(v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

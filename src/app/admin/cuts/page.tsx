@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,9 @@ export default function AdminCutsPage() {
   const [cuts, setCuts] = useState<(Cut & { prep_options: PrepOption[] })[]>([]);
   const [isPending, startTransition] = useTransition();
   const [addingPrepFor, setAddingPrepFor] = useState<string | null>(null);
+  const [category, setCategory] = useState("steak");
+  const [isProcessable, setIsProcessable] = useState("false");
+  const formRef = useRef<HTMLFormElement>(null);
 
   function loadCuts() {
     const supabase = createClient();
@@ -48,13 +51,21 @@ export default function AdminCutsPage() {
     loadCuts();
   }, []);
 
-  function handleAddCut(formData: FormData) {
+  function handleAddCut(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    formData.set("category", category);
+    formData.set("is_processable", isProcessable);
+
     startTransition(async () => {
       const result = await addCut(formData);
       if (result.error) {
         toast.error(result.error);
       } else {
         toast.success("Cut added!");
+        formRef.current?.reset();
+        setCategory("steak");
+        setIsProcessable("false");
         loadCuts();
       }
     });
@@ -106,7 +117,7 @@ export default function AdminCutsPage() {
           <CardTitle className="text-base">Add Cut</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={handleAddCut} className="space-y-3">
+          <form ref={formRef} onSubmit={handleAddCut} className="space-y-3">
             <div className="space-y-2">
               <Label>Cut Name</Label>
               <Input name="name" placeholder="e.g. Rump Steak" required />
@@ -114,7 +125,7 @@ export default function AdminCutsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select name="category" defaultValue="steak">
+                <Select value={category} onValueChange={(v) => v && setCategory(v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -150,7 +161,7 @@ export default function AdminCutsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Has Prep Options?</Label>
-                <Select name="is_processable" defaultValue="false">
+                <Select value={isProcessable} onValueChange={(v) => v && setIsProcessable(v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -194,7 +205,7 @@ export default function AdminCutsPage() {
                   <p className="text-xs text-muted-foreground">
                     {cut.est_weight_per_slot_kg}kg &bull;{" "}
                     {cut.portions_per_slot} portion{cut.portions_per_slot > 1 ? "s" : ""}
-                    {cut.is_processable && " &bull; Has prep options"}
+                    {cut.is_processable && " \u2022 Has prep options"}
                   </p>
                 </div>
                 <Button
@@ -221,7 +232,7 @@ export default function AdminCutsPage() {
                       >
                         <span className="text-xs">
                           {po.label}
-                          {po.extra_cost > 0 && (
+                          {Number(po.extra_cost) > 0 && (
                             <span className="text-muted-foreground">
                               {" "}(+${po.extra_cost})
                             </span>

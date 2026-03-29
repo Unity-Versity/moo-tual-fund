@@ -90,13 +90,13 @@ export function OrderCuts({
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            ~{(sc.actual_weight_kg ?? sc.cut.est_weight_per_slot_kg / sc.cut.portions_per_slot).toFixed(1)}kg
+                            ~{(sc.actual_weight_kg ?? Number(sc.cut.est_weight_per_slot_kg) / Math.max(sc.cut.portions_per_slot, 1)).toFixed(1)}kg
                           </p>
                         </div>
 
                         {isProcessable ? (
                           <Select
-                            defaultValue={sc.selected_prep_option_id ?? "none"}
+                            defaultValue={sc.selected_prep_option_id ?? undefined}
                             onValueChange={(val) => handlePrepChange(sc.id, val)}
                             disabled={isPending}
                           >
@@ -107,7 +107,7 @@ export function OrderCuts({
                               {cutPrepOptions.map((po) => (
                                 <SelectItem key={po.id} value={po.id} className="text-xs">
                                   {po.label}
-                                  {po.extra_cost > 0 && ` (+$${po.extra_cost})`}
+                                  {Number(po.extra_cost) > 0 && ` (+$${po.extra_cost})`}
                                 </SelectItem>
                               ))}
                             </SelectContent>

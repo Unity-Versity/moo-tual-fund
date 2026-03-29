@@ -1,44 +1,42 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, RefreshCw, Copy, Check } from "lucide-react";
-import { createHousehold, regeneratePin, toggleHousehold } from "../actions";
+import { createHousehold, regeneratePin, toggleHousehold, getHouseholds } from "../actions";
 import type { Household } from "@/lib/types";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
 
 export default function AdminHouseholdsPage() {
   const [households, setHouseholds] = useState<Household[]>([]);
   const [isPending, startTransition] = useTransition();
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   function loadHouseholds() {
-    const supabase = createClient();
-    supabase
-      .from("households")
-      .select("*")
-      .order("created_at")
-      .then(({ data }) => {
-        if (data) setHouseholds(data as Household[]);
-      });
+    getHouseholds().then((data) => {
+      setHouseholds(data as Household[]);
+    });
   }
 
   useEffect(() => {
     loadHouseholds();
   }, []);
 
-  function handleCreate(formData: FormData) {
+  function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
     startTransition(async () => {
       const result = await createHousehold(formData);
       if (result.error) {
         toast.error(result.error);
       } else {
         toast.success(`Household created! PIN: ${result.pin}`);
+        formRef.current?.reset();
         loadHouseholds();
       }
     });
@@ -68,10 +66,14 @@ export default function AdminHouseholdsPage() {
   }
 
   async function copyPin(pin: string, id: string) {
-    await navigator.clipboard.writeText(pin);
-    setCopiedId(id);
-    toast.success("PIN copied!");
-    setTimeout(() => setCopiedId(null), 2000);
+    try {
+      await navigator.clipboard.writeText(pin);
+      setCopiedId(id);
+      toast.success("PIN copied!");
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      toast.error("Couldn't copy — try selecting it manually");
+    }
   }
 
   return (
@@ -81,7 +83,7 @@ export default function AdminHouseholdsPage() {
           <CardTitle className="text-base">Add Household</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={handleCreate} className="space-y-3">
+          <form ref={formRef} onSubmit={handleCreate} className="space-y-3">
             <div className="space-y-2">
               <Label htmlFor="name">Household Name</Label>
               <Input name="name" placeholder="e.g. The Smiths" required />

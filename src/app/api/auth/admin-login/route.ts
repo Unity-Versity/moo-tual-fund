@@ -3,7 +3,15 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { setSession } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
-  const { email, password } = await request.json();
+  let body: { email?: string; password?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const password = typeof body.password === "string" ? body.password : "";
 
   if (!email || !password) {
     return NextResponse.json(

@@ -46,7 +46,7 @@ export default async function AdminPage() {
         <Card>
           <CardContent className="p-3 text-center">
             <p className="text-2xl font-bold">
-              {status ? STAGE_LABELS[status.stage].split(" ").slice(0, 3).join(" ") : "—"}
+              {status ? (STAGE_LABELS[status.stage] ?? status.stage).split(" ").slice(0, 3).join(" ") : "—"}
             </p>
             <p className="text-xs text-muted-foreground">Current Stage</p>
           </CardContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,12 +21,15 @@ import { createClient } from "@/lib/supabase/client";
 export default function AdminPaymentsPage() {
   const [households, setHouseholds] = useState<Household[]>([]);
   const [payments, setPayments] = useState<(Payment & { household?: { name: string } })[]>([]);
+  const [selectedHousehold, setSelectedHousehold] = useState("");
+  const [method, setMethod] = useState("PayID");
   const [isPending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
 
   function loadData() {
     const supabase = createClient();
     Promise.all([
-      supabase.from("households").select("*").eq("is_active", true).order("name"),
+      supabase.from("households_safe").select("*").eq("is_active", true).order("name"),
       supabase
         .from("payments")
         .select("*, household:households(name)")
@@ -43,13 +46,25 @@ export default function AdminPaymentsPage() {
 
   const total = payments.reduce((s, p) => s + Number(p.amount), 0);
 
-  function handleAdd(formData: FormData) {
+  function handleAdd(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!selectedHousehold) {
+      toast.error("Please select a household");
+      return;
+    }
+    const formData = new FormData(e.currentTarget);
+    formData.set("household_id", selectedHousehold);
+    formData.set("method", method);
+
     startTransition(async () => {
       const result = await addPayment(formData);
       if (result.error) {
         toast.error(result.error);
       } else {
         toast.success("Payment recorded! 💰");
+        formRef.current?.reset();
+        setSelectedHousehold("");
+        setMethod("PayID");
         loadData();
       }
     });
@@ -74,10 +89,10 @@ export default function AdminPaymentsPage() {
           <CardTitle className="text-base">Record Payment</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={handleAdd} className="space-y-3">
+          <form ref={formRef} onSubmit={handleAdd} className="space-y-3">
             <div className="space-y-2">
               <Label>Household</Label>
-              <Select name="household_id" required>
+              <Select value={selectedHousehold} onValueChange={(v) => v && setSelectedHousehold(v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select household" />
                 </SelectTrigger>
@@ -112,7 +127,7 @@ export default function AdminPaymentsPage() {
             </div>
             <div className="space-y-2">
               <Label>Method</Label>
-              <Select name="method" defaultValue="PayID">
+              <Select value={method} onValueChange={(v) => v && setMethod(v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
