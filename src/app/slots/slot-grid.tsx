@@ -12,6 +12,64 @@ type SlotWithHousehold = Omit<Slot, "household"> & {
   household: { id: string; name: string } | null;
 };
 
+function SteerRing({
+  total,
+  mine,
+  otherClaimed,
+}: {
+  total: number;
+  mine: number;
+  otherClaimed: number;
+}) {
+  const size = 220;
+  const strokeWidth = 24;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const segmentGap = 4;
+  const gapAngle = (segmentGap / circumference) * 360;
+  const segmentAngle = 360 / total - gapAngle;
+  const segmentLength = (segmentAngle / 360) * circumference;
+
+  const segments = Array.from({ length: total }, (_, i) => {
+    const startAngle = i * (360 / total) - 90;
+    const offset = circumference - segmentLength;
+    let color = "var(--muted)";
+    let opacity = 0.4;
+
+    if (i < mine) {
+      color = "var(--accent)";
+      opacity = 1;
+    } else if (i < mine + otherClaimed) {
+      color = "var(--primary)";
+      opacity = 0.5;
+    }
+
+    return (
+      <circle
+        key={i}
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={`${segmentLength} ${offset}`}
+        strokeDashoffset={0}
+        strokeLinecap="round"
+        opacity={opacity}
+        transform={`rotate(${startAngle} ${size / 2} ${size / 2})`}
+        className="transition-all duration-500"
+      />
+    );
+  });
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {segments}
+    </svg>
+  );
+}
+
 export function SlotGrid({
   slots,
   session,
@@ -23,12 +81,19 @@ export function SlotGrid({
   const [isPending, startTransition] = useTransition();
 
   const totalSlots = slots.length;
-  const claimedSlots = slots.filter((s) => s.is_claimed);
   const mySlots = slots.filter(
     (s) =>
       s.is_claimed &&
       session?.type === "household" &&
       s.household?.id === session.household_id
+  );
+  const otherClaimed = slots.filter(
+    (s) =>
+      s.is_claimed &&
+      !(
+        session?.type === "household" &&
+        s.household?.id === session.household_id
+      )
   );
   const availableSlots = slots.filter((s) => !s.is_claimed);
   const isAdmin = session?.type === "admin";
@@ -59,89 +124,78 @@ export function SlotGrid({
     });
   }
 
-  // Grab the next available slot for the "Add a share" button
   const nextAvailable = availableSlots[0];
-
-  // Get an available slot to release (last one the user claimed)
   const lastMine = [...mySlots].reverse()[0];
 
   return (
     <div className="space-y-6">
-      {/* ── Visual allocation bar ── */}
-      <div>
-        <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium">
-            {claimedSlots.length}/{totalSlots} shares claimed
-          </span>
-          <span className="text-muted-foreground">
-            {availableSlots.length} available
-          </span>
+      {/* ── Steer ring chart ── */}
+      <div className="flex flex-col items-center">
+        <div className="relative">
+          <SteerRing
+            total={totalSlots}
+            mine={mySlots.length}
+            otherClaimed={otherClaimed.length}
+          />
+          {/* Center content */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-3xl">🐄</span>
+            <p className="mt-1 text-2xl font-bold tabular-nums">
+              {availableSlots.length}/{totalSlots}
+            </p>
+            <p className="text-xs text-muted-foreground">available</p>
+          </div>
         </div>
-        <div className="flex gap-1">
-          {slots.map((slot) => {
-            const mine =
-              session?.type === "household" &&
-              slot.household?.id === session.household_id;
-            return (
-              <div
-                key={slot.id}
-                className={`h-8 flex-1 rounded-md transition-all ${
-                  mine
-                    ? "bg-accent"
-                    : slot.is_claimed
-                      ? "bg-primary/60"
-                      : "bg-muted border border-dashed border-muted-foreground/20"
-                }`}
-                title={
-                  mine
-                    ? "Your share"
-                    : slot.is_claimed
-                      ? "Claimed"
-                      : "Available"
-                }
-              />
-            );
-          })}
-        </div>
-        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+
+        {/* Legend */}
+        <div className="mt-3 flex items-center gap-5 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-sm bg-accent" />
-            Yours
+            <span className="inline-block h-3 w-3 rounded-full bg-accent" />
+            Yours ({mySlots.length})
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-sm bg-primary/60" />
-            Taken
+            <span className="inline-block h-3 w-3 rounded-full bg-primary/50" />
+            Taken ({otherClaimed.length})
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-sm border border-dashed border-muted-foreground/20 bg-muted" />
-            Available
+            <span className="inline-block h-3 w-3 rounded-full bg-muted opacity-40" />
+            Open ({availableSlots.length})
           </span>
         </div>
       </div>
 
-      {/* ── Your shares ── */}
+      {/* ── Your shares + controls ── */}
       {session?.type === "household" && (
         <Card className="border-accent/30 bg-accent/5">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold">
-                  {mySlots.length === 0
-                    ? "You haven't claimed any shares yet"
-                    : `You have ${mySlots.length} share${mySlots.length > 1 ? "s" : ""}`}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {mySlots.length === 0
-                    ? "Each share is 1/8th of the steer. Grab as many as you like!"
-                    : `That's ${mySlots.length}/8 of the steer`}
-                </p>
+          <CardContent className="p-5">
+            <div className="flex flex-col items-center gap-4">
+              <div className="text-center">
+                {mySlots.length === 0 ? (
+                  <>
+                    <p className="text-lg font-bold">Grab your share</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Each share is 1/8th of the steer. Want more beef? Grab more shares.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-bold">
+                      {mySlots.length} share{mySlots.length > 1 ? "s" : ""} claimed
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      That&apos;s {mySlots.length}/8 of the steer
+                      {mySlots.length > 1 ? " — nice haul!" : ""}
+                    </p>
+                  </>
+                )}
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-3">
                 {mySlots.length > 0 && lastMine && (
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
+                    size="lg"
+                    className="gap-2"
                     onClick={() => handleUnclaim(lastMine.id)}
                     disabled={isPending}
                     aria-label="Remove a share"
@@ -151,12 +205,13 @@ export function SlotGrid({
                     ) : (
                       <Minus className="h-4 w-4" />
                     )}
+                    Remove
                   </Button>
                 )}
                 {nextAvailable && (
                   <Button
-                    size="icon"
-                    className="h-9 w-9 bg-accent text-accent-foreground hover:bg-accent/90"
+                    size="lg"
+                    className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
                     onClick={() => handleClaim(nextAvailable.id)}
                     disabled={isPending}
                     aria-label="Add a share"
@@ -166,6 +221,7 @@ export function SlotGrid({
                     ) : (
                       <Plus className="h-4 w-4" />
                     )}
+                    {mySlots.length === 0 ? "Claim a Share" : "Add Another"}
                   </Button>
                 )}
               </div>
