@@ -100,6 +100,7 @@ export function SlotGrid({
                       className="text-xs text-muted-foreground"
                       onClick={() => handleUnclaim(slot.id)}
                       disabled={isLoading}
+                      aria-label={`Release slot ${slot.slot_number}`}
                     >
                       {isLoading ? (
                         <Loader2 className="mr-1 h-3 w-3 animate-spin" />
@@ -120,6 +121,7 @@ export function SlotGrid({
                       className="bg-accent text-accent-foreground hover:bg-accent/90"
                       onClick={() => handleClaim(slot.id)}
                       disabled={isLoading}
+                      aria-label={`Claim slot ${slot.slot_number}`}
                     >
                       {isLoading ? (
                         <Loader2 className="mr-1 h-3 w-3 animate-spin" />

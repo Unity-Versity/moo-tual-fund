@@ -2,7 +2,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { STAGE_LABELS } from "@/lib/types";
 import type { CowStatus, Slot, Expense, Payment, Suggestion } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { SuggestionActions } from "./suggestion-actions";
 
 async function getData() {

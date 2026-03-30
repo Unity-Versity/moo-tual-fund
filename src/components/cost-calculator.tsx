@@ -84,7 +84,8 @@ export function CostCalculator({
       <p className="text-center text-xs text-muted-foreground">
         {hangingWeight
           ? `Based on ${hangingWeight}kg dressed weight, split 8 ways.`
-          : "Split 8 ways. Per-kg price available once dressed weight is confirmed."}
+          : "Split 8 ways. Per-kg price available once dressed weight is confirmed."}{" "}
+        Prep upgrades (e.g. pre-cooked mince) are charged separately per household.
       </p>
     </div>
   );

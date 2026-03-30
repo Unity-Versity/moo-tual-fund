@@ -3,7 +3,16 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/session";
 import { revalidatePath } from "next/cache";
-import type { CowStage } from "@/lib/types";
+import {
+  updateCowStatusSchema,
+  createHouseholdSchema,
+  addExpenseSchema,
+  addPaymentSchema,
+  addCutSchema,
+  addPrepOptionSchema,
+  updateSuggestionStatusSchema,
+  parseForm,
+} from "@/lib/validations";
 
 export async function getHouseholds() {
   await requireAdmin();
@@ -19,15 +28,12 @@ export async function getHouseholds() {
 
 export async function updateCowStatus(formData: FormData) {
   await requireAdmin();
-  const supabase = await createServiceRoleClient();
 
-  const stage = formData.get("stage") as CowStage;
-  const est_sacrifice_date = formData.get("est_sacrifice_date") as string || null;
-  const hanging_weight_kg = formData.get("hanging_weight_kg") as string;
-  const total_take_home_kg = formData.get("total_take_home_kg") as string;
-  const est_raw_pickup = formData.get("est_raw_pickup") as string || null;
-  const est_smoked_pickup = formData.get("est_smoked_pickup") as string || null;
-  const banner_message = formData.get("banner_message") as string || null;
+  const parsed = parseForm(updateCowStatusSchema, formData);
+  if (!parsed.success) return { error: parsed.error };
+  const d = parsed.data;
+
+  const supabase = await createServiceRoleClient();
 
   const { data: existing } = await supabase
     .from("cow_status")
@@ -42,13 +48,13 @@ export async function updateCowStatus(formData: FormData) {
   const { error } = await supabase
     .from("cow_status")
     .update({
-      stage,
-      est_sacrifice_date,
-      hanging_weight_kg: hanging_weight_kg ? Number(hanging_weight_kg) : null,
-      total_take_home_kg: total_take_home_kg ? Number(total_take_home_kg) : null,
-      est_raw_pickup,
-      est_smoked_pickup,
-      banner_message,
+      stage: d.stage,
+      est_sacrifice_date: d.est_sacrifice_date || null,
+      hanging_weight_kg: d.hanging_weight_kg ? Number(d.hanging_weight_kg) : null,
+      total_take_home_kg: d.total_take_home_kg ? Number(d.total_take_home_kg) : null,
+      est_raw_pickup: d.est_raw_pickup || null,
+      est_smoked_pickup: d.est_smoked_pickup || null,
+      banner_message: d.banner_message || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", existing.id);
@@ -65,21 +71,17 @@ export async function updateCowStatus(formData: FormData) {
 
 export async function createHousehold(formData: FormData) {
   await requireAdmin();
+
+  const parsed = parseForm(createHouseholdSchema, formData);
+  if (!parsed.success) return { error: parsed.error };
+
   const supabase = await createServiceRoleClient();
-
-  const name = formData.get("name") as string;
-  const contact_info = formData.get("contact_info") as string || null;
-
-  if (!name?.trim()) {
-    return { error: "Household name is required." };
-  }
-
   const invite_token = crypto.randomUUID();
 
   const { error } = await supabase.from("households").insert({
-    name: name.trim(),
+    name: parsed.data.name,
     invite_token,
-    contact_info,
+    contact_info: parsed.data.contact_info || null,
     is_active: false,
   });
 
@@ -130,20 +132,16 @@ export async function toggleHousehold(householdId: string, isActive: boolean) {
 
 export async function addExpense(formData: FormData) {
   await requireAdmin();
+
+  const parsed = parseForm(addExpenseSchema, formData);
+  if (!parsed.success) return { error: parsed.error };
+
   const supabase = await createServiceRoleClient();
 
-  const description = formData.get("description") as string;
-  const amount = formData.get("amount") as string;
-  const category = formData.get("category") as string || "general";
-
-  if (!description?.trim() || !amount) {
-    return { error: "Description and amount are required." };
-  }
-
   const { error } = await supabase.from("expenses").insert({
-    description: description.trim(),
-    amount: Number(amount),
-    category,
+    description: parsed.data.description,
+    amount: parsed.data.amount,
+    category: parsed.data.category,
   });
 
   if (error) {
@@ -174,24 +172,19 @@ export async function deleteExpense(id: string) {
 
 export async function addPayment(formData: FormData) {
   await requireAdmin();
+
+  const parsed = parseForm(addPaymentSchema, formData);
+  if (!parsed.success) return { error: parsed.error };
+  const d = parsed.data;
+
   const supabase = await createServiceRoleClient();
 
-  const household_id = formData.get("household_id") as string;
-  const amount = formData.get("amount") as string;
-  const method = (formData.get("method") as string) || "PayID";
-  const payment_date = formData.get("payment_date") as string;
-  const notes = formData.get("notes") as string || null;
-
-  if (!household_id || !amount) {
-    return { error: "Household and amount are required." };
-  }
-
   const { error } = await supabase.from("payments").insert({
-    household_id,
-    amount: Number(amount),
-    method,
-    payment_date: payment_date || new Date().toISOString().split("T")[0],
-    notes,
+    household_id: d.household_id,
+    amount: d.amount,
+    method: d.method,
+    payment_date: d.payment_date || new Date().toISOString().split("T")[0],
+    notes: d.notes || null,
   });
 
   if (error) {
@@ -222,17 +215,12 @@ export async function deletePayment(id: string) {
 
 export async function addCut(formData: FormData) {
   await requireAdmin();
+
+  const parsed = parseForm(addCutSchema, formData);
+  if (!parsed.success) return { error: parsed.error };
+  const d = parsed.data;
+
   const supabase = await createServiceRoleClient();
-
-  const name = formData.get("name") as string;
-  const category = formData.get("category") as string || "other";
-  const est_weight_per_slot_kg = formData.get("est_weight_per_slot_kg") as string;
-  const is_processable = formData.get("is_processable") === "true";
-  const portions_per_slot = formData.get("portions_per_slot") as string || "1";
-
-  if (!name?.trim()) {
-    return { error: "Cut name is required." };
-  }
 
   const { data: maxOrder } = await supabase
     .from("cuts")
@@ -242,16 +230,16 @@ export async function addCut(formData: FormData) {
     .single();
 
   const { error } = await supabase.from("cuts").insert({
-    name: name.trim(),
-    category,
-    est_weight_per_slot_kg: Number(est_weight_per_slot_kg) || 0,
-    is_processable,
+    name: d.name,
+    category: d.category,
+    est_weight_per_slot_kg: d.est_weight_per_slot_kg,
+    is_processable: d.is_processable,
     display_order: (maxOrder?.display_order ?? 0) + 1,
-    portions_per_slot: Number(portions_per_slot) || 1,
+    portions_per_slot: d.portions_per_slot,
   });
 
   if (error) {
-    return { error: "Failed to add cut." };
+    return { error: "Failed to add cut. Name may already exist." };
   }
 
   revalidatePath("/admin/cuts");
@@ -274,33 +262,30 @@ export async function deleteCut(id: string) {
 
 export async function addPrepOption(formData: FormData) {
   await requireAdmin();
+
+  const parsed = parseForm(addPrepOptionSchema, formData);
+  if (!parsed.success) return { error: parsed.error };
+  const d = parsed.data;
+
   const supabase = await createServiceRoleClient();
-
-  const cut_id = formData.get("cut_id") as string;
-  const label = formData.get("label") as string;
-  const extra_cost = formData.get("extra_cost") as string;
-
-  if (!cut_id || !label?.trim()) {
-    return { error: "Cut and label are required." };
-  }
 
   const { data: maxOrder } = await supabase
     .from("prep_options")
     .select("display_order")
-    .eq("cut_id", cut_id)
+    .eq("cut_id", d.cut_id)
     .order("display_order", { ascending: false })
     .limit(1)
     .single();
 
   const { error } = await supabase.from("prep_options").insert({
-    cut_id,
-    label: label.trim(),
-    extra_cost: Number(extra_cost) || 0,
+    cut_id: d.cut_id,
+    label: d.label,
+    extra_cost: d.extra_cost,
     display_order: (maxOrder?.display_order ?? 0) + 1,
   });
 
   if (error) {
-    return { error: "Failed to add prep option." };
+    return { error: "Failed to add prep option. Label may already exist for this cut." };
   }
 
   revalidatePath("/admin/cuts");
@@ -321,16 +306,42 @@ export async function deletePrepOption(id: string) {
   return { success: true };
 }
 
-// ── Suggestions ─────────────────────────────────────────
+// ── Weights ─────────────────────────────────────────────
 
-export async function updateSuggestionStatus(id: string, status: string) {
+export async function updateActualWeight(slotCutId: string, weight: number | null) {
   await requireAdmin();
   const supabase = await createServiceRoleClient();
 
   const { error } = await supabase
+    .from("slot_cuts")
+    .update({ actual_weight_kg: weight })
+    .eq("id", slotCutId);
+
+  if (error) {
+    return { error: "Failed to update weight." };
+  }
+
+  revalidatePath("/admin/weights");
+  revalidatePath("/my-order");
+  return { success: true };
+}
+
+// ── Suggestions ─────────────────────────────────────────
+
+export async function updateSuggestionStatus(id: string, status: string) {
+  await requireAdmin();
+
+  const parsed = updateSuggestionStatusSchema.safeParse({ id, status });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const supabase = await createServiceRoleClient();
+
+  const { error } = await supabase
     .from("suggestions")
-    .update({ status })
-    .eq("id", id);
+    .update({ status: parsed.data.status })
+    .eq("id", parsed.data.id);
 
   if (error) {
     return { error: "Failed to update suggestion." };

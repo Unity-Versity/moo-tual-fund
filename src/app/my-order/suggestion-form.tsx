@@ -42,7 +42,7 @@ export function SuggestionForm({ suggestions }: { suggestions: Suggestion[] }) {
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="e.g. I'd rather not have ox tongue — happy to swap for extra mince!"
+          placeholder="e.g. We'd prefer not to get ox tongue if possible"
           className="min-h-[60px] flex-1 text-sm"
         />
         <Button

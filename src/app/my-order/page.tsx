@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "My Order",
   description: "View your cuts, choose prep options, and track your balance.",
 };
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Package, Flame, DollarSign } from "lucide-react";
@@ -47,7 +47,20 @@ async function getData(householdId: string) {
 
   const mySlots = slotsRes.data ?? [];
   const costPerSlot = totalExpenses / 8;
-  const totalOwed = costPerSlot * mySlots.length;
+  const baseCost = costPerSlot * mySlots.length;
+
+  // Sum extra_cost from selected prep options across all slots
+  const prepSurcharge = mySlots.reduce(
+    (sum, slot) =>
+      sum +
+      (slot.slot_cuts ?? []).reduce(
+        (slotSum: number, sc: SlotCut & { prep_option: PrepOption | null }) =>
+          slotSum + (sc.prep_option ? Number(sc.prep_option.extra_cost) : 0),
+        0
+      ),
+    0
+  );
+  const totalOwed = baseCost + prepSurcharge;
 
   return {
     slots: mySlots as (Slot & {
@@ -58,6 +71,8 @@ async function getData(householdId: string) {
     totalExpenses,
     totalPaid,
     totalOwed,
+    baseCost,
+    prepSurcharge,
     suggestions: (suggestionsRes.data ?? []) as Suggestion[],
   };
 }
@@ -69,7 +84,7 @@ export default async function MyOrderPage() {
   }
 
   const data = await getData(session.household_id!);
-  const { slots, prepOptions, totalPaid, totalOwed, suggestions } = data;
+  const { slots, prepOptions, totalPaid, totalOwed, baseCost, prepSurcharge, suggestions } = data;
 
   if (slots.length === 0) {
     return (
@@ -117,7 +132,8 @@ export default async function MyOrderPage() {
             </div>
           </div>
           <div className="text-right text-xs text-muted-foreground">
-            <p>Owed: ${totalOwed.toFixed(2)}</p>
+            <p>Base share: ${baseCost.toFixed(2)}</p>
+            {prepSurcharge > 0 && <p>Prep upgrades: +${prepSurcharge.toFixed(2)}</p>}
             <p>Paid: ${totalPaid.toFixed(2)}</p>
           </div>
         </CardContent>
@@ -172,10 +188,10 @@ export default async function MyOrderPage() {
 
       {/* Suggestions */}
       <div>
-        <h2 className="mb-3 text-lg font-bold">Got a Request? 💬</h2>
+        <h2 className="mb-3 text-lg font-bold">Cut Preferences 💬</h2>
         <p className="mb-3 text-sm text-muted-foreground">
-          Don&apos;t want a particular cut? Want to swap with someone? Drop a note and
-          we&apos;ll see what we can do — no promises, but we&apos;ll try!
+          Every pack gets the same cuts, but let us know if there&apos;s something
+          you&apos;d really rather not receive. No promises, but we&apos;ll do our best!
         </p>
         <SuggestionForm suggestions={suggestions} />
       </div>

@@ -45,7 +45,7 @@ export default function LoginPage() {
       router.push("/");
       router.refresh();
     } catch {
-      setError("Something went wrong. Try again!");
+      setError("Connection error — check your internet and try again.");
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ export default function LoginPage() {
       router.push("/admin");
       router.refresh();
     } catch {
-      setError("Something went wrong. Try again!");
+      setError("Connection error — check your internet and try again.");
     } finally {
       setLoading(false);
     }

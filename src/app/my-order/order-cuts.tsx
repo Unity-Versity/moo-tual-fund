@@ -100,7 +100,7 @@ export function OrderCuts({
                             onValueChange={(val) => handlePrepChange(sc.id, val)}
                             disabled={isPending}
                           >
-                            <SelectTrigger className="h-8 w-[160px] text-xs">
+                            <SelectTrigger className="h-8 w-full sm:w-[160px] text-xs" aria-label={`Prep option for ${sc.cut.name}`}>
                               <SelectValue placeholder="Choose prep..." />
                             </SelectTrigger>
                             <SelectContent>

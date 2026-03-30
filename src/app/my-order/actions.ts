@@ -3,9 +3,15 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireHousehold } from "@/lib/session";
 import { revalidatePath } from "next/cache";
+import { suggestionSchema } from "@/lib/validations";
 
 export async function updatePrepOption(slotCutId: string, prepOptionId: string | null) {
   const session = await requireHousehold();
+
+  if (!slotCutId) {
+    return { error: "Cut allocation ID is required." };
+  }
+
   const supabase = await createServiceRoleClient();
 
   // Verify this slot_cut belongs to one of the caller's slots
@@ -45,14 +51,15 @@ export async function updatePrepOption(slotCutId: string, prepOptionId: string |
 export async function submitSuggestion(message: string) {
   const session = await requireHousehold();
 
-  if (!message || !message.trim()) {
-    return { error: "Can't submit an empty suggestion!" };
+  const parsed = suggestionSchema.safeParse({ message });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
   }
 
   const supabase = await createServiceRoleClient();
   const { error } = await supabase.from("suggestions").insert({
     household_id: session.household_id,
-    message: message.trim(),
+    message: parsed.data.message,
   });
 
   if (error) {

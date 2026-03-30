@@ -42,6 +42,7 @@ export function Nav({ session }: { session: SessionData | null }) {
           onClick={() => setOpen(!open)}
           className="rounded-md p-2 text-muted-foreground hover:text-foreground md:hidden"
           aria-label="Toggle menu"
+          aria-expanded={open}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
