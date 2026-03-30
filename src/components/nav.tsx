@@ -9,7 +9,7 @@ import type { SessionData } from "@/lib/types";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
-  { href: "/slots", label: "Slots" },
+  { href: "/slots", label: "Shares" },
   { href: "/my-order", label: "My Order" },
   { href: "/costs", label: "Costs" },
 ];

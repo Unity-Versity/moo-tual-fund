@@ -43,7 +43,7 @@ async function getData(householdId: string) {
   const hangingWeight = cowStatus?.hanging_weight_kg
     ? Number(cowStatus.hanging_weight_kg)
     : null;
-  const estimateWeight = hangingWeight ?? 160;
+  const estimateWeight = hangingWeight ?? 150;
 
   const { fixed, processingRate } = splitExpenses(expenses);
   const { total: totalExpenses } = calcTotal(fixed, processingRate, estimateWeight);
@@ -98,9 +98,11 @@ export default async function MyOrderPage() {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <span className="text-5xl">🐄</span>
-        <h1 className="text-xl font-bold">No Slots Yet, {session.household_name}!</h1>
+        <h1 className="text-xl font-bold">No Shares Yet, {session.household_name}!</h1>
         <p className="text-sm text-muted-foreground">
-          You haven&apos;t claimed any slots. Head to the Slots page to stake your steak!
+          You haven&apos;t claimed any shares. Head to the{" "}
+          <a href="/slots" className="font-medium text-primary underline">Shares page</a>{" "}
+          to stake your steak!
         </p>
       </div>
     );
@@ -122,7 +124,7 @@ export default async function MyOrderPage() {
           Your Order, {session.household_name} 🥩
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          You&apos;ve claimed {slots.length} slot{slots.length > 1 ? "s" : ""} — that&apos;s{" "}
+          You&apos;ve got {slots.length} share{slots.length > 1 ? "s" : ""} — that&apos;s{" "}
           {slots.length}/8 of the steer!
         </p>
       </div>

@@ -8,7 +8,7 @@ import type { Expense } from "@/lib/types";
 
 const TOTAL_SLOTS = 8;
 const MIN_WEIGHT = 140;
-const MAX_WEIGHT = 180;
+const MAX_WEIGHT = 160;
 
 export const PROCESSING_CATEGORY = "Processing (per kg)";
 
@@ -48,7 +48,7 @@ export function CostCalculator({
   hangingWeight: number | null;
 }) {
   const isLocked = hangingWeight !== null;
-  const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? 160);
+  const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? 150);
   const activeWeight = isLocked ? hangingWeight : dressedWeight;
 
   const { fixed, processingRate } = splitExpenses(expenses);

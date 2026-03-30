@@ -134,9 +134,9 @@ export default async function HomePage() {
             <strong className="text-foreground">Claim your share(s)</strong> —
             head to the{" "}
             <Link href="/slots" className="font-medium text-primary underline">
-              slots page
+              shares page
             </Link>{" "}
-            and grab however many eighths you want.
+            and grab as many as you want. One share = 1/8th of the steer.
           </li>
           <li>
             <strong className="text-foreground">Choose your variations</strong>{" "}
@@ -359,7 +359,7 @@ export default async function HomePage() {
               className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
               size="lg"
             >
-              Claim Your Slot
+              Claim Your Share
               <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </Link>
@@ -373,27 +373,37 @@ export default async function HomePage() {
       </section>
 
       {/* ── Who's In ── */}
-      {claimedSlots.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">
-                Who&apos;s In
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {claimedSlots.map((slot) => (
-                <Badge key={slot.id} variant="secondary" className="text-sm">
-                  {slot.household?.name ?? "Unknown"} (Slot {slot.slot_number})
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {claimedSlots.length > 0 && (() => {
+        const grouped = claimedSlots.reduce(
+          (acc, s) => {
+            const name = s.household?.name ?? "Unknown";
+            acc[name] = (acc[name] ?? 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        );
+        return (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                <CardTitle className="text-base">
+                  Who&apos;s In
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(grouped).map(([name, count]) => (
+                  <Badge key={name} variant="secondary" className="text-sm">
+                    {name} — {count} share{count > 1 ? "s" : ""}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
     </div>
   );
 }

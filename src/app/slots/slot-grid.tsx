@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, User } from "lucide-react";
+import { Loader2, Plus, Minus } from "lucide-react";
 import { claimSlot, unclaimSlot } from "./actions";
 import type { Slot, SessionData } from "@/lib/types";
 import { toast } from "sonner";
@@ -23,6 +23,28 @@ export function SlotGrid({
   const [pending, setPending] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const totalSlots = slots.length;
+  const claimedSlots = slots.filter((s) => s.is_claimed);
+  const mySlots = slots.filter(
+    (s) =>
+      s.is_claimed &&
+      session?.type === "household" &&
+      s.household?.id === session.household_id
+  );
+  const availableSlots = slots.filter((s) => !s.is_claimed);
+  const isAdmin = session?.type === "admin";
+
+  // Group claimed slots by household
+  const byHousehold = claimedSlots.reduce(
+    (acc, s) => {
+      const name = s.household?.name ?? "Unknown";
+      if (!acc[name]) acc[name] = [];
+      acc[name].push(s);
+      return acc;
+    },
+    {} as Record<string, SlotWithHousehold[]>
+  );
+
   function handleClaim(slotId: string) {
     setPending(slotId);
     startTransition(async () => {
@@ -30,7 +52,7 @@ export function SlotGrid({
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Slot claimed! Welcome to the herd 🐄");
+        toast.success("Share claimed! Welcome to the herd 🐄");
       }
       setPending(null);
     });
@@ -43,103 +65,194 @@ export function SlotGrid({
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Slot released.");
+        toast.success("Share released.");
       }
       setPending(null);
     });
   }
 
-  const isOwner = (slot: SlotWithHousehold) =>
-    session?.type === "household" &&
-    slot.household?.id === session.household_id;
+  // Grab the next available slot for the "Add a share" button
+  const nextAvailable = availableSlots[0];
 
-  const isAdmin = session?.type === "admin";
+  // Get an available slot to release (last one the user claimed)
+  const lastMine = [...mySlots].reverse()[0];
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {slots.map((slot) => {
-        const claimed = slot.is_claimed;
-        const mine = isOwner(slot);
-        const isLoading = pending === slot.id && isPending;
+    <div className="space-y-6">
+      {/* ── Visual allocation bar ── */}
+      <div>
+        <div className="mb-2 flex items-center justify-between text-sm">
+          <span className="font-medium">
+            {claimedSlots.length}/{totalSlots} shares claimed
+          </span>
+          <span className="text-muted-foreground">
+            {availableSlots.length} available
+          </span>
+        </div>
+        <div className="flex gap-1">
+          {slots.map((slot) => {
+            const mine =
+              session?.type === "household" &&
+              slot.household?.id === session.household_id;
+            return (
+              <div
+                key={slot.id}
+                className={`h-8 flex-1 rounded-md transition-all ${
+                  mine
+                    ? "bg-accent"
+                    : slot.is_claimed
+                      ? "bg-primary/60"
+                      : "bg-muted border border-dashed border-muted-foreground/20"
+                }`}
+                title={
+                  mine
+                    ? `Your share (#${slot.slot_number})`
+                    : slot.is_claimed
+                      ? `${slot.household?.name ?? "Claimed"} (#${slot.slot_number})`
+                      : `Available (#${slot.slot_number})`
+                }
+              />
+            );
+          })}
+        </div>
+        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 rounded-sm bg-accent" />
+            Yours
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 rounded-sm bg-primary/60" />
+            Taken
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 rounded-sm border border-dashed border-muted-foreground/20 bg-muted" />
+            Available
+          </span>
+        </div>
+      </div>
 
-        return (
-          <Card
-            key={slot.id}
-            className={`relative transition-all ${
-              mine
-                ? "border-accent ring-2 ring-accent/20"
-                : claimed
-                  ? "border-primary/30 bg-primary/5"
-                  : "border-dashed border-muted-foreground/30 hover:border-accent/50"
-            }`}
-          >
-            <CardContent className="flex flex-col items-center gap-2 p-4 text-center">
+      {/* ── Your shares ── */}
+      {session?.type === "household" && (
+        <Card className="border-accent/30 bg-accent/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold">
+                  {mySlots.length === 0
+                    ? "You haven't claimed any shares yet"
+                    : `You have ${mySlots.length} share${mySlots.length > 1 ? "s" : ""}`}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {mySlots.length === 0
+                    ? "Each share is 1/8th of the steer. Grab as many as you like!"
+                    : `That's ${mySlots.length}/8 of the steer`}
+                </p>
+              </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Slot {slot.slot_number}
-                </span>
-                {mine && (
-                  <Badge variant="default" className="bg-accent text-xs">
-                    Yours
-                  </Badge>
+                {mySlots.length > 0 && lastMine && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => handleUnclaim(lastMine.id)}
+                    disabled={isPending}
+                    aria-label="Remove a share"
+                  >
+                    {pending === lastMine.id && isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Minus className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+                {nextAvailable && (
+                  <Button
+                    size="icon"
+                    className="h-9 w-9 bg-accent text-accent-foreground hover:bg-accent/90"
+                    onClick={() => handleClaim(nextAvailable.id)}
+                    disabled={isPending}
+                    aria-label="Add a share"
+                  >
+                    {pending === nextAvailable.id && isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                  </Button>
                 )}
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-              {claimed ? (
-                <>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <User className="h-5 w-5 text-primary" />
+      {/* ── Who's got what ── */}
+      {claimedSlots.length > 0 && (
+        <div>
+          <p className="mb-2 text-sm font-medium text-muted-foreground">
+            The Herd
+          </p>
+          <div className="space-y-2">
+            {Object.entries(byHousehold).map(([name, hSlots]) => {
+              const isMine =
+                session?.type === "household" &&
+                hSlots[0]?.household?.id === session.household_id;
+              return (
+                <div
+                  key={name}
+                  className={`flex items-center justify-between rounded-lg border p-3 ${
+                    isMine ? "border-accent/30 bg-accent/5" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{name}</span>
+                    {isMine && (
+                      <Badge variant="default" className="bg-accent text-xs">
+                        You
+                      </Badge>
+                    )}
                   </div>
-                  <p className="text-sm font-semibold">
-                    {slot.household?.name ?? "Claimed"}
+                  <span className="text-sm text-muted-foreground">
+                    {hSlots.length} share{hSlots.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Admin: detailed slot management ── */}
+      {isAdmin && (
+        <div>
+          <p className="mb-2 text-sm font-medium text-muted-foreground">
+            Admin — All Slots
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {slots.map((slot) => (
+              <Card key={slot.id} className="text-center">
+                <CardContent className="p-2">
+                  <p className="text-xs text-muted-foreground">#{slot.slot_number}</p>
+                  <p className="text-xs font-medium truncate">
+                    {slot.household?.name ?? "—"}
                   </p>
-                  {(mine || isAdmin) && (
+                  {slot.is_claimed && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-xs text-muted-foreground"
+                      className="mt-1 h-6 text-[10px] text-muted-foreground"
                       onClick={() => handleUnclaim(slot.id)}
-                      disabled={isLoading}
-                      aria-label={`Release slot ${slot.slot_number}`}
+                      disabled={isPending}
                     >
-                      {isLoading ? (
-                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      ) : null}
                       Release
                     </Button>
                   )}
-                </>
-              ) : (
-                <>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30">
-                    <span className="text-lg">🐄</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Available</p>
-                  {session?.type === "household" && (
-                    <Button
-                      size="sm"
-                      className="bg-accent text-accent-foreground hover:bg-accent/90"
-                      onClick={() => handleClaim(slot.id)}
-                      disabled={isLoading}
-                      aria-label={`Claim slot ${slot.slot_number}`}
-                    >
-                      {isLoading ? (
-                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                      ) : (
-                        <Check className="mr-1 h-3 w-3" />
-                      )}
-                      Claim
-                    </Button>
-                  )}
-                  {!session && (
-                    <p className="text-xs text-muted-foreground">Login to claim</p>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

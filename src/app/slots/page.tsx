@@ -5,7 +5,7 @@ import type { Slot, CowStatus } from "@/lib/types";
 import { SlotGrid } from "./slot-grid";
 
 export const metadata: Metadata = {
-  title: "Slots",
+  title: "Shares",
   description: "Claim your share of the steer.",
 };
 
@@ -33,29 +33,26 @@ export default async function SlotsPage() {
   const session = await getSession();
 
   const claimed = slots.filter((s) => s.is_claimed).length;
+  const available = slots.length - claimed;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">Slots</h1>
+        <h1 className="text-2xl font-bold">Claim Your Share</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Each slot is an equal share of the steer. Grab as many as you need.
+          The steer is split into 8 equal shares. Grab one, grab three —
+          however much beef you want in your freezer. Each share is 1/8th
+          of the whole animal.
         </p>
       </div>
 
       <SlotGrid slots={slots} session={session} />
 
-      {claimed >= 8 && (
+      {available === 0 && (
         <p className="text-center text-sm text-muted-foreground">
-          All slots filled! If there&apos;s still demand we can add another
-          beast — more shares means the cost per slot drops for everyone.
-        </p>
-      )}
-
-      {claimed > 0 && claimed < 8 && (
-        <p className="text-center text-xs text-muted-foreground">
-          If all slots fill and there&apos;s more demand, we can add another
-          beast and the per-slot cost drops.
+          Fully allocated! If there&apos;s still demand we can look at
+          another beast — more shares means a lower cost per share for
+          everyone.
         </p>
       )}
     </div>

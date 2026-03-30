@@ -31,7 +31,7 @@ export default async function CostsPage() {
   const hangingWeight = status?.hanging_weight_kg
     ? Number(status.hanging_weight_kg)
     : null;
-  const estimateWeight = hangingWeight ?? 160;
+  const estimateWeight = hangingWeight ?? 150;
 
   const { fixed, processingRate } = splitExpenses(expenses);
   const { total } = calcTotal(fixed, processingRate, estimateWeight);
