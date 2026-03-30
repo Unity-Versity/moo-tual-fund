@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import type { Cut, PrepOption, SlotCut, Slot, Suggestion, Payment, Expense } from "@/lib/types";
+import type { Cut, PrepOption, SlotCut, Slot, Suggestion, Payment, Expense, CowStatus } from "@/lib/types";
+import { splitExpenses, calcTotal } from "@/components/cost-calculator";
 
 export const metadata: Metadata = {
   title: "My Order",
@@ -18,7 +19,7 @@ import { SuggestionForm } from "./suggestion-form";
 async function getData(householdId: string) {
   const supabase = await createServerSupabaseClient();
 
-  const [slotsRes, cutsRes, prepRes, expensesRes, paymentsRes, suggestionsRes] =
+  const [slotsRes, cutsRes, prepRes, expensesRes, paymentsRes, suggestionsRes, statusRes] =
     await Promise.all([
       supabase
         .from("slots")
@@ -34,12 +35,19 @@ async function getData(householdId: string) {
         .select("*")
         .eq("household_id", householdId)
         .order("created_at", { ascending: false }),
+      supabase.from("cow_status").select("*").limit(1).single(),
     ]);
 
-  const totalExpenses = (expensesRes.data ?? []).reduce(
-    (sum: number, e: Expense) => sum + Number(e.amount),
-    0
-  );
+  const expenses = (expensesRes.data ?? []) as Expense[];
+  const cowStatus = statusRes.data as CowStatus | null;
+  const hangingWeight = cowStatus?.hanging_weight_kg
+    ? Number(cowStatus.hanging_weight_kg)
+    : null;
+  const estimateWeight = hangingWeight ?? 160;
+
+  const { fixed, processingRate } = splitExpenses(expenses);
+  const { total: totalExpenses } = calcTotal(fixed, processingRate, estimateWeight);
+
   const totalPaid = (paymentsRes.data ?? []).reduce(
     (sum: number, p: Payment) => sum + Number(p.amount),
     0

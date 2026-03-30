@@ -1,42 +1,41 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { Expense } from "@/lib/types";
+import type { CowStatus, Expense } from "@/lib/types";
+import { splitExpenses, calcTotal } from "@/components/cost-calculator";
 
 export const metadata: Metadata = {
   title: "Costs",
   description: "See how the money breaks down across all shares.",
 };
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Receipt, Wallet } from "lucide-react";
+import { CostCalculator } from "@/components/cost-calculator";
 
 async function getData() {
   const supabase = await createServerSupabaseClient();
 
-  const [expensesRes, slotsRes] = await Promise.all([
+  const [statusRes, expensesRes] = await Promise.all([
+    supabase.from("cow_status").select("*").limit(1).single(),
     supabase.from("expenses").select("*").order("created_at"),
-    supabase.from("slots").select("is_claimed"),
   ]);
 
-  const claimedCount = (slotsRes.data ?? []).filter(
-    (s: { is_claimed: boolean }) => s.is_claimed
-  ).length;
-
   return {
+    status: statusRes.data as CowStatus | null,
     expenses: (expensesRes.data ?? []) as Expense[],
-    claimedSlots: claimedCount,
   };
 }
 
 export default async function CostsPage() {
-  const { expenses, claimedSlots } = await getData();
+  const { status, expenses } = await getData();
 
-  const totalExpenses = expenses.reduce(
-    (sum, e) => sum + Number(e.amount),
-    0
-  );
-  const costPerSlot = claimedSlots > 0 ? totalExpenses / 8 : 0;
+  const hangingWeight = status?.hanging_weight_kg
+    ? Number(status.hanging_weight_kg)
+    : null;
+  const estimateWeight = hangingWeight ?? 160;
+
+  const { fixed, processingRate } = splitExpenses(expenses);
+  const { total } = calcTotal(fixed, processingRate, estimateWeight);
+  const costPerSlot = total / 8;
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,51 +51,30 @@ export default async function CostsPage() {
         <Card>
           <CardContent className="flex flex-col items-center p-4 text-center">
             <Receipt className="mb-1 h-5 w-5 text-primary" />
-            <p className="text-xl font-bold">${totalExpenses.toFixed(0)}</p>
-            <p className="text-xs text-muted-foreground">Total</p>
+            <p className="text-xl font-bold">${total.toFixed(0)}</p>
+            <p className="text-xs text-muted-foreground">
+              Total{!hangingWeight && " (est.)"}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex flex-col items-center p-4 text-center">
             <Wallet className="mb-1 h-5 w-5 text-accent" />
             <p className="text-xl font-bold">${costPerSlot.toFixed(0)}</p>
-            <p className="text-xs text-muted-foreground">Per Slot</p>
+            <p className="text-xs text-muted-foreground">
+              Per Slot{!hangingWeight && " (est.)"}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Expenses */}
+      {/* Interactive Calculator */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Breakdown</CardTitle>
         </CardHeader>
         <CardContent>
-          {expenses.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No expenses logged yet.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {expenses.map((e) => (
-                <div key={e.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm">{e.description}</p>
-                    <Badge variant="outline" className="text-xs">
-                      {e.category}
-                    </Badge>
-                  </div>
-                  <span className="text-sm font-semibold">
-                    ${Number(e.amount).toFixed(2)}
-                  </span>
-                </div>
-              ))}
-              <Separator />
-              <div className="flex items-center justify-between font-bold">
-                <span className="text-sm">Total</span>
-                <span className="text-sm">${totalExpenses.toFixed(2)}</span>
-              </div>
-            </div>
-          )}
+          <CostCalculator expenses={expenses} hangingWeight={hangingWeight} />
         </CardContent>
       </Card>
 

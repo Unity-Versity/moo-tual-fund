@@ -22,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 const CATEGORIES = [
   "Animal Purchase",
   "Butcher Fees",
+  "Processing (per kg)",
   "Smoking Supplies",
   "Transport",
   "Packaging",
@@ -49,7 +50,12 @@ export default function AdminExpensesPage() {
     loadExpenses();
   }, []);
 
-  const total = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const fixedTotal = expenses
+    .filter((e) => e.category !== "Processing (per kg)")
+    .reduce((s, e) => s + Number(e.amount), 0);
+  const processingRates = expenses
+    .filter((e) => e.category === "Processing (per kg)")
+    .reduce((s, e) => s + Number(e.amount), 0);
 
   function handleAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -95,12 +101,14 @@ export default function AdminExpensesPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Amount ($)</Label>
+                <Label>
+                  {category === "Processing (per kg)" ? "Rate ($/kg)" : "Amount ($)"}
+                </Label>
                 <Input
                   type="number"
                   step="0.01"
                   name="amount"
-                  placeholder="0.00"
+                  placeholder={category === "Processing (per kg)" ? "e.g. 3.30" : "0.00"}
                   required
                 />
               </div>
@@ -136,7 +144,9 @@ export default function AdminExpensesPage() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">All Expenses</CardTitle>
-            <span className="text-sm font-bold">${total.toFixed(2)}</span>
+            <span className="text-sm font-bold">
+              ${fixedTotal.toFixed(2)}{processingRates > 0 && ` + $${processingRates.toFixed(2)}/kg`}
+            </span>
           </div>
         </CardHeader>
         <CardContent>
@@ -159,7 +169,9 @@ export default function AdminExpensesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold">
-                      ${Number(e.amount).toFixed(2)}
+                      {e.category === "Processing (per kg)"
+                        ? `$${Number(e.amount).toFixed(2)}/kg`
+                        : `$${Number(e.amount).toFixed(2)}`}
                     </span>
                     <Button
                       variant="ghost"
