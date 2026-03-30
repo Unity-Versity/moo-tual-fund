@@ -33,7 +33,8 @@ export const STAGE_DESCRIPTIONS: Record<CowStage, string> = {
 export interface Household {
   id: string;
   name: string;
-  pin_code: string;
+  pin_code: string | null;
+  invite_token: string;
   contact_info: string | null;
   is_active: boolean;
   is_admin: boolean;

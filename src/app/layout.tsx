@@ -19,15 +19,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Moo-tual Fund",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://moo-tual.fund"
+  ),
+  title: {
+    default: "Moo-tual Fund",
+    template: "%s · Moo-tual Fund",
+  },
   description:
     "Split a steer with mates. Track it, claim your slot, sort your order.",
+  openGraph: {
+    title: "Moo-tual Fund",
+    description:
+      "Split a steer with mates. Track it, claim your slot, sort your order.",
+    siteName: "Moo-tual Fund",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Moo-tual Fund",
+    description:
+      "Split a steer with mates. Track it, claim your slot, sort your order.",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 async function getCowStatus(): Promise<CowStatus | null> {

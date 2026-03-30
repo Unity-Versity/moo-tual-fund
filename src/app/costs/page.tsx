@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Expense } from "@/lib/types";
+
+export const metadata: Metadata = {
+  title: "Costs",
+  description: "See how the money breaks down across all shares.",
+};
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";

@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
   // Public routes — no auth required
   if (
     pathname === "/login" ||
+    pathname.startsWith("/invite") ||
     pathname.startsWith("/api/auth/")
   ) {
     return NextResponse.next();

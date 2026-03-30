@@ -55,7 +55,11 @@ export async function claimSlot(slotId: string) {
 
     const { error: insertError } = await supabase.from("slot_cuts").insert(slotCuts);
     if (insertError) {
-      console.error("Failed to create slot_cuts:", insertError);
+      await supabase
+        .from("slots")
+        .update({ household_id: null, is_claimed: false, claimed_at: null })
+        .eq("id", slotId);
+      return { error: "Something went wrong setting up your cuts. Try claiming again!" };
     }
   }
 

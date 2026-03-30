@@ -115,7 +115,7 @@ export default function LoginPage() {
                 />
               </div>
               {error && (
-                <p className="text-sm text-destructive">{error}</p>
+                <p role="alert" className="text-sm text-destructive">{error}</p>
               )}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Verifying..." : "Let Me In"}
@@ -148,20 +148,20 @@ export default function LoginPage() {
           </div>
           <CardTitle>Got Beef?</CardTitle>
           <CardDescription>
-            Enter your invite code to get moo-ving.
+            Enter your PIN to get moo-ving.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePinLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pin">Invite Code</Label>
+              <Label htmlFor="pin">Your PIN</Label>
               <Input
                 id="pin"
                 type="text"
                 inputMode="numeric"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
-                placeholder="Enter your 6-digit code"
+                placeholder="Enter your PIN"
                 className="text-center text-lg tracking-widest"
                 maxLength={6}
                 required
@@ -169,7 +169,7 @@ export default function LoginPage() {
               />
             </div>
             {error && (
-              <p className="text-sm text-destructive">{error}</p>
+              <p role="alert" className="text-sm text-destructive">{error}</p>
             )}
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
               {loading ? "Checking the paddock..." : "Let's Go! 🐄"}

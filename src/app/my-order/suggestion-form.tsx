@@ -48,6 +48,7 @@ export function SuggestionForm({ suggestions }: { suggestions: Suggestion[] }) {
         <Button
           type="submit"
           size="icon"
+          aria-label="Send suggestion"
           className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90"
           disabled={isPending || !message.trim()}
         >

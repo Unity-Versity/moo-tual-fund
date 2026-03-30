@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import type { Cut, PrepOption, SlotCut, Slot, Suggestion, Payment, Expense } from "@/lib/types";
+
+export const metadata: Metadata = {
+  title: "My Order",
+  description: "View your cuts, choose prep options, and track your balance.",
+};
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";

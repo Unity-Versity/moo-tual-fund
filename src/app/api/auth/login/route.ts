@@ -20,19 +20,13 @@ export async function POST(request: NextRequest) {
     .from("households")
     .select("id, name, is_active, is_admin")
     .eq("pin_code", pin)
+    .eq("is_active", true)
     .single();
 
   if (error || !household) {
     return NextResponse.json(
-      { error: "Invalid invite code. Double-check and try again!" },
+      { error: "Invalid PIN. Double-check and try again!" },
       { status: 401 }
-    );
-  }
-
-  if (!household.is_active) {
-    return NextResponse.json(
-      { error: "This household has been deactivated. Contact the admin." },
-      { status: 403 }
     );
   }
 

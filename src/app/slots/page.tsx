@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/session";
 import type { Slot, CowStatus } from "@/lib/types";
 import { SlotGrid } from "./slot-grid";
+
+export const metadata: Metadata = {
+  title: "Slots",
+  description: "Claim your share of the steer.",
+};
 
 async function getData() {
   const supabase = await createServerSupabaseClient();

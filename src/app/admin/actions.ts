@@ -5,12 +5,6 @@ import { requireAdmin } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import type { CowStage } from "@/lib/types";
 
-function generatePin(): string {
-  const array = new Uint32Array(1);
-  crypto.getRandomValues(array);
-  return String(100000 + (array[0] % 900000));
-}
-
 export async function getHouseholds() {
   await requireAdmin();
   const supabase = await createServiceRoleClient();
@@ -80,12 +74,13 @@ export async function createHousehold(formData: FormData) {
     return { error: "Household name is required." };
   }
 
-  const pin = generatePin();
+  const invite_token = crypto.randomUUID();
 
   const { error } = await supabase.from("households").insert({
     name: name.trim(),
-    pin_code: pin,
+    invite_token,
     contact_info,
+    is_active: false,
   });
 
   if (error) {
@@ -93,25 +88,25 @@ export async function createHousehold(formData: FormData) {
   }
 
   revalidatePath("/admin/households");
-  return { success: true, pin };
+  return { success: true, invite_token };
 }
 
-export async function regeneratePin(householdId: string) {
+export async function regenerateInvite(householdId: string) {
   await requireAdmin();
   const supabase = await createServiceRoleClient();
 
-  const pin = generatePin();
+  const invite_token = crypto.randomUUID();
   const { error } = await supabase
     .from("households")
-    .update({ pin_code: pin })
+    .update({ invite_token, pin_code: null, is_active: false })
     .eq("id", householdId);
 
   if (error) {
-    return { error: "Failed to regenerate PIN." };
+    return { error: "Failed to regenerate invite." };
   }
 
   revalidatePath("/admin/households");
-  return { success: true, pin };
+  return { success: true, invite_token };
 }
 
 export async function toggleHousehold(householdId: string, isActive: boolean) {

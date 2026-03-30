@@ -5,9 +5,10 @@
 create table if not exists public.households (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  pin_code text not null unique,
+  pin_code text unique,
+  invite_token text not null unique default gen_random_uuid()::text,
   contact_info text,
-  is_active boolean not null default true,
+  is_active boolean not null default false,
   is_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
