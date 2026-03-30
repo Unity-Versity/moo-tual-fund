@@ -3,10 +3,9 @@ import { getSession } from "@/lib/session";
 import { COW_STAGES, STAGE_LABELS, STAGE_DESCRIPTIONS } from "@/lib/types";
 import type { CowStatus, Slot, Expense } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Check, ChevronRight, Bone, Users } from "lucide-react";
+import { Check, ChevronRight, Bone } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import Image from "next/image";
@@ -372,38 +371,6 @@ export default async function HomePage() {
         </Link>
       </section>
 
-      {/* ── Who's In ── */}
-      {claimedSlots.length > 0 && (() => {
-        const grouped = claimedSlots.reduce(
-          (acc, s) => {
-            const name = s.household?.name ?? "Unknown";
-            acc[name] = (acc[name] ?? 0) + 1;
-            return acc;
-          },
-          {} as Record<string, number>
-        );
-        return (
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                <CardTitle className="text-base">
-                  Who&apos;s In
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(grouped).map(([name, count]) => (
-                  <Badge key={name} variant="secondary" className="text-sm">
-                    {name} — {count} share{count > 1 ? "s" : ""}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
     </div>
   );
 }

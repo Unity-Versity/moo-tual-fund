@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Minus } from "lucide-react";
 import { claimSlot, unclaimSlot } from "./actions";
 import type { Slot, SessionData } from "@/lib/types";
@@ -33,17 +32,6 @@ export function SlotGrid({
   );
   const availableSlots = slots.filter((s) => !s.is_claimed);
   const isAdmin = session?.type === "admin";
-
-  // Group claimed slots by household
-  const byHousehold = claimedSlots.reduce(
-    (acc, s) => {
-      const name = s.household?.name ?? "Unknown";
-      if (!acc[name]) acc[name] = [];
-      acc[name].push(s);
-      return acc;
-    },
-    {} as Record<string, SlotWithHousehold[]>
-  );
 
   function handleClaim(slotId: string) {
     setPending(slotId);
@@ -106,10 +94,10 @@ export function SlotGrid({
                 }`}
                 title={
                   mine
-                    ? `Your share (#${slot.slot_number})`
+                    ? "Your share"
                     : slot.is_claimed
-                      ? `${slot.household?.name ?? "Claimed"} (#${slot.slot_number})`
-                      : `Available (#${slot.slot_number})`
+                      ? "Claimed"
+                      : "Available"
                 }
               />
             );
@@ -184,42 +172,6 @@ export function SlotGrid({
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* ── Who's got what ── */}
-      {claimedSlots.length > 0 && (
-        <div>
-          <p className="mb-2 text-sm font-medium text-muted-foreground">
-            The Herd
-          </p>
-          <div className="space-y-2">
-            {Object.entries(byHousehold).map(([name, hSlots]) => {
-              const isMine =
-                session?.type === "household" &&
-                hSlots[0]?.household?.id === session.household_id;
-              return (
-                <div
-                  key={name}
-                  className={`flex items-center justify-between rounded-lg border p-3 ${
-                    isMine ? "border-accent/30 bg-accent/5" : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{name}</span>
-                    {isMine && (
-                      <Badge variant="default" className="bg-accent text-xs">
-                        You
-                      </Badge>
-                    )}
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {hSlots.length} share{hSlots.length > 1 ? "s" : ""}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       )}
 
       {/* ── Admin: detailed slot management ── */}
