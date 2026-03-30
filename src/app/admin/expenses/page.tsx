@@ -164,6 +164,7 @@ export default function AdminExpensesPage() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Delete expense"
                       className="h-7 w-7 text-destructive"
                       onClick={() => handleDelete(e.id)}
                       disabled={isPending}

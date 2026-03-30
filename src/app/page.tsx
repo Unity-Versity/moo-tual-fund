@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/session";
 import { COW_STAGES, STAGE_LABELS, STAGE_DESCRIPTIONS } from "@/lib/types";
-import type { CowStatus, Slot } from "@/lib/types";
+import type { CowStatus, Slot, Expense } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,10 @@ import { CostCalculator } from "@/components/cost-calculator";
 async function getData() {
   const supabase = await createServerSupabaseClient();
 
-  const [statusRes, slotsRes] = await Promise.all([
+  const [statusRes, slotsRes, expensesRes] = await Promise.all([
     supabase.from("cow_status").select("*").limit(1).single(),
     supabase.from("slots").select("*, household:households(name)"),
+    supabase.from("expenses").select("*").order("created_at"),
   ]);
 
   return {
@@ -25,6 +26,7 @@ async function getData() {
     slots: (slotsRes.data ?? []) as (Slot & {
       household: { name: string } | null;
     })[],
+    expenses: (expensesRes.data ?? []) as Expense[],
   };
 }
 
@@ -79,7 +81,7 @@ function JourneyStep({
 }
 
 export default async function HomePage() {
-  const { status, slots } = await getData();
+  const { status, slots, expenses } = await getData();
   const session = await getSession();
 
   const claimedSlots = slots.filter((s) => s.is_claimed);
@@ -254,6 +256,7 @@ export default async function HomePage() {
           how big the animal is. Drag the slider to see how it works out.
         </p>
         <CostCalculator
+          expenses={expenses}
           hangingWeight={
             status?.hanging_weight_kg
               ? Number(status.hanging_weight_kg)
