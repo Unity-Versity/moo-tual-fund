@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Moo-tual Fund — split a steer with mates";
+export const alt = "Moo-tual Fund — Split a whole steer with mates";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -15,55 +15,139 @@ export default function OGImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(145deg, #f5f0e8 0%, #e8e0d0 100%)",
+          background: "linear-gradient(160deg, #f7f3eb 0%, #e6dcc8 50%, #d4c9b0 100%)",
           fontFamily: "system-ui, sans-serif",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* Background pattern — subtle cuts of beef */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            alignItems: "center",
+            opacity: 0.06,
+            fontSize: 80,
+            gap: "20px",
+            padding: "20px",
+          }}
+        >
+          {"🥩🍖🥩🍖🥩🍖🥩🍖🥩🍖🥩🍖🥩🍖🥩🍖🥩🍖🥩🍖🥩🍖🥩🍖"}
+        </div>
+
+        {/* Green accent bar at top */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "8px",
+            background: "linear-gradient(90deg, #5a8a3c, #d4832a, #5a8a3c)",
+          }}
+        />
+
+        {/* Main content */}
         <div
           style={{
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            gap: "16px",
-            marginBottom: "24px",
+            gap: "8px",
           }}
         >
-          <span style={{ fontSize: 80 }}>🐄</span>
+          <span style={{ fontSize: 100 }}>🐄</span>
+
+          <div
+            style={{
+              fontSize: 64,
+              fontWeight: 900,
+              color: "#2d1f14",
+              letterSpacing: "-2px",
+              lineHeight: 1,
+            }}
+          >
+            Moo-tual Fund
+          </div>
+
+          <div
+            style={{
+              fontSize: 26,
+              color: "#6b5744",
+              textAlign: "center",
+              maxWidth: "700px",
+              lineHeight: 1.4,
+              marginTop: "8px",
+            }}
+          >
+            A whole steer, split between mates.
+          </div>
+
+          <div
+            style={{
+              marginTop: "28px",
+              display: "flex",
+              alignItems: "center",
+              gap: "32px",
+              fontSize: 20,
+              color: "#8b7560",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: 24 }}>🥩</span>
+              <span>8 shares</span>
+            </div>
+            <div
+              style={{
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                background: "#8b7560",
+              }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: 24 }}>📦</span>
+              <span>Vacuum sealed</span>
+            </div>
+            <div
+              style={{
+                width: "4px",
+                height: "4px",
+                borderRadius: "50%",
+                background: "#8b7560",
+              }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: 24 }}>🔥</span>
+              <span>Smoked in-house</span>
+            </div>
+          </div>
         </div>
+
+        {/* Bottom accent */}
         <div
           style={{
-            fontSize: 56,
-            fontWeight: 800,
-            color: "#3d2b1f",
-            marginBottom: "12px",
-          }}
-        >
-          Moo-tual Fund
-        </div>
-        <div
-          style={{
-            fontSize: 24,
-            color: "#6b5744",
-            textAlign: "center",
-            maxWidth: "600px",
-          }}
-        >
-          Split a steer with mates. Track it, claim your slot, sort your order.
-        </div>
-        <div
-          style={{
-            marginTop: "32px",
+            position: "absolute",
+            bottom: "24px",
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            padding: "10px 24px",
+            padding: "8px 20px",
             background: "#5a8a3c",
             color: "white",
             borderRadius: "999px",
-            fontSize: 18,
-            fontWeight: 600,
+            fontSize: 16,
+            fontWeight: 700,
           }}
         >
-          8 slots · 1 steer · 0 middlemen
+          No shop. No middlemen. Just beef.
         </div>
       </div>
     ),

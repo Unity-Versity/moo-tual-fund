@@ -13,12 +13,22 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#5a8a3c",
+          background: "linear-gradient(145deg, #6b9e4a 0%, #3d6b28 100%)",
           borderRadius: "6px",
-          fontSize: 22,
         }}
       >
-        🐄
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 900,
+            color: "white",
+            fontFamily: "system-ui, sans-serif",
+            letterSpacing: "-0.5px",
+            lineHeight: 1,
+          }}
+        >
+          MF
+        </div>
       </div>
     ),
     { ...size }

@@ -27,19 +27,19 @@ export const metadata: Metadata = {
     template: "%s · Moo-tual Fund",
   },
   description:
-    "Split a steer with mates. Track it, claim your slot, sort your order.",
+    "A whole steer, split between mates. No shop, no middlemen — just beef.",
   openGraph: {
-    title: "Moo-tual Fund",
+    title: "Moo-tual Fund 🐄",
     description:
-      "Split a steer with mates. Track it, claim your slot, sort your order.",
+      "A whole steer, split between mates. Claim your share, pick your cuts, fill your freezer.",
     siteName: "Moo-tual Fund",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moo-tual Fund",
+    title: "Moo-tual Fund 🐄",
     description:
-      "Split a steer with mates. Track it, claim your slot, sort your order.",
+      "A whole steer, split between mates. Claim your share, pick your cuts, fill your freezer.",
   },
 };
 
