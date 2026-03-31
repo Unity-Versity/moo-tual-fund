@@ -175,7 +175,6 @@ export function CostCalculator({
           ? `Based on ${hangingWeight}kg confirmed dressed weight, split 8 ways.`
           : "Drag the slider to estimate costs at different dressed weights. Numbers lock once the actual weight is confirmed."}{" "}
         The estimated kg per share is dressed weight (includes bone and fat — actual take-home meat will be less).
-        Prep upgrades (e.g. pre-cooked mince) are charged separately per household.
       </p>
     </div>
   );
