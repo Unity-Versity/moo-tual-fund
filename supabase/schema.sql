@@ -117,17 +117,15 @@ insert into public.cuts (name, category, est_weight_per_slot_kg, is_processable,
   ('Rump Steak', 'steak', 2.5, false, 3, 1),
   ('Porterhouse', 'steak', 2.0, false, 4, 1),
   ('T-Bone', 'steak', 1.5, false, 5, 1),
-  ('Chuck Roast', 'roast', 3.0, false, 6, 1),
-  ('Blade Roast', 'roast', 2.5, false, 7, 1),
-  ('Silverside', 'roast', 3.0, false, 8, 1),
-  ('Topside', 'roast', 2.5, false, 9, 1),
-  ('Osso Bucco', 'slow_cook', 2.0, false, 10, 1),
-  ('Beef Cheeks', 'slow_cook', 1.0, false, 11, 1),
+  ('Chuck Roast', 'roast', 3.0, true, 6, 1),
+  ('Blade & Cheeks', 'slow_cook', 3.5, true, 7, 1),
+  ('Silverside', 'roast', 3.0, true, 8, 1),
+  ('Top Round', 'roast', 2.5, true, 9, 1),
+  ('Shins', 'slow_cook', 2.0, true, 10, 1),
   ('Diced Beef', 'slow_cook', 2.0, false, 12, 1),
   ('Mince', 'mince', 3.0, true, 13, 3),
-  ('Soup Bones', 'other', 2.0, false, 14, 1),
-  ('Brisket', 'smoked', 3.0, false, 15, 1),
-  ('Beef Ribs', 'smoked', 2.5, false, 16, 1)
+  ('Brisket', 'smoked', 3.0, true, 15, 1),
+  ('Beef Ribs', 'smoked', 2.5, true, 16, 1)
 on conflict (name) do nothing;
 
 -- Seed prep options for mince
@@ -137,10 +135,87 @@ from public.cuts c
 cross join (values
   ('Raw Mince', 0, 1),
   ('Bolognaise (ready to heat)', 3, 2),
-  ('Pesto Mince', 3, 3),
+  ('Mexican Mince', 3, 3),
   ('Chilli Con Carne', 3, 4)
 ) as opt(label, extra_cost, display_order)
 where c.name = 'Mince'
+on conflict (cut_id, label) do nothing;
+
+-- Seed prep options for brisket
+insert into public.prep_options (cut_id, label, extra_cost, display_order)
+select c.id, opt.label, opt.extra_cost::numeric, opt.display_order::int
+from public.cuts c
+cross join (values
+  ('Raw', 0, 1),
+  ('Smoked & Sliced', 3, 2)
+) as opt(label, extra_cost, display_order)
+where c.name = 'Brisket'
+on conflict (cut_id, label) do nothing;
+
+-- Seed prep options for beef ribs
+insert into public.prep_options (cut_id, label, extra_cost, display_order)
+select c.id, opt.label, opt.extra_cost::numeric, opt.display_order::int
+from public.cuts c
+cross join (values
+  ('Raw', 0, 1),
+  ('Slow Cooked (fall off bone)', 3, 2)
+) as opt(label, extra_cost, display_order)
+where c.name = 'Beef Ribs'
+on conflict (cut_id, label) do nothing;
+
+-- Seed prep options for chuck roast
+insert into public.prep_options (cut_id, label, extra_cost, display_order)
+select c.id, opt.label, opt.extra_cost::numeric, opt.display_order::int
+from public.cuts c
+cross join (values
+  ('Raw', 0, 1),
+  ('BBQ Pulled Beef', 3, 2)
+) as opt(label, extra_cost, display_order)
+where c.name = 'Chuck Roast'
+on conflict (cut_id, label) do nothing;
+
+-- Seed prep options for blade & cheeks
+insert into public.prep_options (cut_id, label, extra_cost, display_order)
+select c.id, opt.label, opt.extra_cost::numeric, opt.display_order::int
+from public.cuts c
+cross join (values
+  ('Raw', 0, 1),
+  ('Chinese Braised', 3, 2)
+) as opt(label, extra_cost, display_order)
+where c.name = 'Blade & Cheeks'
+on conflict (cut_id, label) do nothing;
+
+-- Seed prep options for silverside
+insert into public.prep_options (cut_id, label, extra_cost, display_order)
+select c.id, opt.label, opt.extra_cost::numeric, opt.display_order::int
+from public.cuts c
+cross join (values
+  ('Raw', 0, 1),
+  ('Red Wine & Onion Braised', 3, 2)
+) as opt(label, extra_cost, display_order)
+where c.name = 'Silverside'
+on conflict (cut_id, label) do nothing;
+
+-- Seed prep options for top round
+insert into public.prep_options (cut_id, label, extra_cost, display_order)
+select c.id, opt.label, opt.extra_cost::numeric, opt.display_order::int
+from public.cuts c
+cross join (values
+  ('Raw', 0, 1),
+  ('Roast Beef', 3, 2)
+) as opt(label, extra_cost, display_order)
+where c.name = 'Top Round'
+on conflict (cut_id, label) do nothing;
+
+-- Seed prep options for shins
+insert into public.prep_options (cut_id, label, extra_cost, display_order)
+select c.id, opt.label, opt.extra_cost::numeric, opt.display_order::int
+from public.cuts c
+cross join (values
+  ('Raw', 0, 1),
+  ('Shredded Beef', 3, 2)
+) as opt(label, extra_cost, display_order)
+where c.name = 'Shins'
 on conflict (cut_id, label) do nothing;
 
 -- Enable RLS on all tables

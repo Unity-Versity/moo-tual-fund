@@ -112,9 +112,9 @@ export default async function HomePage() {
             Corey has sourced a whole steer from a local farmer. Once
             it&apos;s processed, he&apos;ll be preparing the cuts that usually
             get overlooked — smoking brisket and ribs low and slow, turning
-            chuck into pulled beef, making bolognaise and Mexican mince — all
-            the bulk food prepping that turns a side of beef into actual meals
-            in your freezer.
+            chuck into pulled beef, smoking brisket, making bolognaise and
+            Mexican mince — all the bulk food prepping that turns a side of
+            beef into actual meals in your freezer.
           </p>
           <p>
             Everything gets vacuum-sealed and portioned so it&apos;s
@@ -190,7 +190,7 @@ export default async function HomePage() {
           {[
             { label: "Steaks", emoji: "🥩", desc: "Scotch, rump, T-bone, etc." },
             { label: "Big Cuts", emoji: "🍖", desc: "Roasts, brisket, ribs" },
-            { label: "Mince & Diced", emoji: "🍲", desc: "Bolognaise, Mexican, raw" },
+            { label: "Mince & Slow Cook", emoji: "🍲", desc: "Pulled beef, bolognaise, braised" },
           ].map((item) => (
             <Card key={item.label}>
               <CardContent className="flex flex-col items-center gap-1 p-3 text-center">
