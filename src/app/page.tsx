@@ -131,9 +131,9 @@ export default async function HomePage() {
         <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
           <li>
             <strong className="text-foreground">Claim your share(s)</strong> —
-            head to the{" "}
-            <Link href="/slots" className="font-medium text-primary underline">
-              shares page
+            head to{" "}
+            <Link href="/my-order" className="font-medium text-primary underline">
+              your order page
             </Link>{" "}
             and grab as many as you want. One share = 1/8th of the steer.
           </li>
@@ -352,20 +352,12 @@ export default async function HomePage() {
 
       {/* ── CTAs ── */}
       <section className="flex flex-col gap-3">
-        {claimedSlots.length < 8 && (
-          <Link href="/slots">
-            <Button
-              className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-              size="lg"
-            >
-              Claim Your Share
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
-        )}
         <Link href="/my-order">
-          <Button variant="outline" className="w-full" size="lg">
-            View My Order
+          <Button
+            className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+            size="lg"
+          >
+            {claimedSlots.length < 8 ? "Claim Your Share" : "View My Order"}
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         </Link>

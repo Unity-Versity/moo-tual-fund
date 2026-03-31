@@ -4,7 +4,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      disallow: ["/admin", "/api/", "/my-order", "/slots", "/costs", "/invite"],
+      disallow: ["/admin", "/api/", "/my-order", "/costs", "/invite"],
     },
   };
 }
