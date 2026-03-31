@@ -34,12 +34,21 @@ export const metadata: Metadata = {
       "A whole steer, split between mates. Claim your share, pick your cuts, fill your freezer.",
     siteName: "Moo-tual Fund",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Moo-tual Fund — A whole steer, split between mates",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Moo-tual Fund 🐄",
     description:
       "A whole steer, split between mates. Claim your share, pick your cuts, fill your freezer.",
+    images: ["/opengraph-image"],
   },
 };
 
