@@ -194,9 +194,6 @@ export default async function MyOrderPage() {
                           Smoked low &amp; slow — ready to eat 🔥
                         </p>
                       </div>
-                      <span className="text-sm font-semibold text-muted-foreground">
-                        ~{sc.cut.est_weight_per_slot_kg}kg
-                      </span>
                     </CardContent>
                   </Card>
                 ))}
