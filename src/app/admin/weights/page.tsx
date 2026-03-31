@@ -2,54 +2,115 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { updateActualWeight } from "../actions";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { updateCutTotalWeight } from "../actions";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 
-interface SlotWithCuts {
+const CATEGORY_ORDER = ["steak", "roast", "slow_cook", "mince", "other", "smoked"];
+const CATEGORY_LABELS: Record<string, string> = {
+  steak: "Steaks",
+  roast: "Roasts",
+  slow_cook: "Slow Cook",
+  mince: "Mince & Ground",
+  other: "Other Cuts",
+  smoked: "Smoked",
+};
+
+interface CutWithWeight {
   id: string;
-  slot_number: number;
-  household: { name: string } | null;
-  slot_cuts: {
-    id: string;
-    portion_number: number;
-    actual_weight_kg: number | null;
-    cut: { name: string; est_weight_per_slot_kg: number; category: string };
-  }[];
+  name: string;
+  category: string;
+  portions_per_slot: number;
+  slot_cut_count: number;
+  claimed_slots: number;
+  total_weight: number | null; // sum of all slot_cuts actual_weight_kg
 }
 
 export default function WeightsPage() {
-  const [slots, setSlots] = useState<SlotWithCuts[]>([]);
+  const [cuts, setCuts] = useState<CutWithWeight[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [savedCuts, setSavedCuts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-      const { data } = await supabase
+
+      // Get all cuts with their slot_cuts from claimed slots
+      const { data: cutsData } = await supabase
+        .from("cuts")
+        .select("id, name, category, portions_per_slot, display_order")
+        .order("display_order");
+
+      const { data: slotCutsData } = await supabase
+        .from("slot_cuts")
+        .select("id, cut_id, actual_weight_kg, slot:slots!inner(is_claimed)")
+        .eq("slot.is_claimed", true);
+
+      const { count: claimedCount } = await supabase
         .from("slots")
-        .select(
-          "id, slot_number, household:households(name), slot_cuts:slot_cuts(id, portion_number, actual_weight_kg, cut:cuts(name, est_weight_per_slot_kg, category))"
-        )
-        .eq("is_claimed", true)
-        .order("slot_number");
-      setSlots((data as unknown as SlotWithCuts[]) ?? []);
+        .select("id", { count: "exact", head: true })
+        .eq("is_claimed", true);
+
+      if (!cutsData) {
+        setLoading(false);
+        return;
+      }
+
+      const result: CutWithWeight[] = cutsData.map((cut) => {
+        const cutSlotCuts = (slotCutsData ?? []).filter(
+          (sc) => sc.cut_id === cut.id
+        );
+        const totalWeight = cutSlotCuts.every((sc) => sc.actual_weight_kg == null)
+          ? null
+          : cutSlotCuts.reduce(
+              (sum, sc) => sum + (Number(sc.actual_weight_kg) || 0),
+              0
+            );
+
+        return {
+          id: cut.id,
+          name: cut.name,
+          category: cut.category,
+          portions_per_slot: cut.portions_per_slot,
+          slot_cut_count: cutSlotCuts.length,
+          claimed_slots: claimedCount ?? 0,
+          total_weight: totalWeight,
+        };
+      });
+
+      setCuts(result);
       setLoading(false);
     }
     load();
   }, []);
 
-  function handleWeightChange(slotCutId: string, value: string) {
-    const weight = value === "" ? null : Number(value);
-    if (value !== "" && isNaN(weight!)) return;
+  function handleWeightChange(cutId: string, value: string) {
+    const totalWeight = value === "" ? null : Number(value);
+    if (value !== "" && isNaN(totalWeight!)) return;
 
     startTransition(async () => {
-      const result = await updateActualWeight(slotCutId, weight);
+      const result = await updateCutTotalWeight(cutId, totalWeight);
       if (result.error) {
         toast.error(result.error);
+      } else {
+        // Update local state
+        setCuts((prev) =>
+          prev.map((c) =>
+            c.id === cutId ? { ...c, total_weight: totalWeight } : c
+          )
+        );
+        setSavedCuts((prev) => new Set(prev).add(cutId));
+        setTimeout(() => {
+          setSavedCuts((prev) => {
+            const next = new Set(prev);
+            next.delete(cutId);
+            return next;
+          });
+        }, 2000);
       }
     });
   }
@@ -62,79 +123,77 @@ export default function WeightsPage() {
     );
   }
 
-  if (slots.length === 0) {
+  if (cuts.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        No claimed slots yet. Weights can be entered once households claim their slots.
+        No cuts defined yet. Add cuts first, then come back to enter weights.
       </p>
     );
   }
 
+  // Group by category
+  const grouped = CATEGORY_ORDER.map((cat) => ({
+    category: cat,
+    label: CATEGORY_LABELS[cat] ?? cat,
+    items: cuts.filter((c) => c.category === cat),
+  })).filter((g) => g.items.length > 0);
+
+  const claimedSlots = cuts[0]?.claimed_slots ?? 0;
+
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-bold">Actual Weights</h2>
+        <h2 className="text-lg font-bold">Total Weights by Cut</h2>
         <p className="text-sm text-muted-foreground">
-          Enter the real weight for each cut after butchering. This updates each household&apos;s order view.
+          Enter the <strong>total</strong> weight for each cut. It&apos;ll be split
+          evenly across {claimedSlots} claimed slot{claimedSlots !== 1 ? "s" : ""}.
         </p>
       </div>
 
-      {slots.map((slot) => (
-        <Card key={slot.id}>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              Slot {slot.slot_number}
-              {slot.household && (
-                <Badge variant="secondary" className="text-xs">
-                  {slot.household.name}
-                </Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {slot.slot_cuts
-              .sort((a, b) => {
-                const catOrder = ["steak", "roast", "slow_cook", "mince", "other", "smoked"];
-                const aCat = catOrder.indexOf(a.cut.category);
-                const bCat = catOrder.indexOf(b.cut.category);
-                if (aCat !== bCat) return aCat - bCat;
-                if (a.cut.name !== b.cut.name) return a.cut.name.localeCompare(b.cut.name);
-                return a.portion_number - b.portion_number;
-              })
-              .map((sc) => (
-                <div
-                  key={sc.id}
-                  className="flex items-center justify-between gap-3"
-                >
+      {grouped.map((group) => (
+        <div key={group.category} className="space-y-2">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            {group.label}
+          </h3>
+          {group.items.map((cut) => {
+            const perSlot =
+              cut.total_weight != null && cut.claimed_slots > 0
+                ? cut.total_weight / cut.claimed_slots
+                : null;
+            const isSaved = savedCuts.has(cut.id);
+
+            return (
+              <Card key={cut.id}>
+                <CardContent className="flex items-center justify-between gap-3 p-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">
-                      {sc.cut.name}
-                      {sc.portion_number > 1 && (
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          #{sc.portion_number}
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Est: {sc.cut.est_weight_per_slot_kg}kg
-                    </p>
+                    <p className="text-sm font-medium">{cut.name}</p>
+                    {perSlot != null && (
+                      <p className="text-xs text-muted-foreground">
+                        = {perSlot.toFixed(2)}kg per share
+                      </p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
+                    {isSaved && (
+                      <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    )}
                     <Input
                       type="number"
                       step="0.01"
                       min="0"
                       placeholder="—"
-                      defaultValue={sc.actual_weight_kg ?? ""}
-                      onBlur={(e) => handleWeightChange(sc.id, e.target.value)}
-                      className="w-20 text-right text-sm"
+                      defaultValue={cut.total_weight ?? ""}
+                      onBlur={(e) => handleWeightChange(cut.id, e.target.value)}
+                      className="w-24 text-right text-sm"
+                      disabled={isPending}
                     />
                     <span className="text-xs text-muted-foreground">kg</span>
                   </div>
-                </div>
-              ))}
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       ))}
 
       {isPending && (

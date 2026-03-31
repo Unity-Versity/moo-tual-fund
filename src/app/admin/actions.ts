@@ -326,6 +326,43 @@ export async function updateActualWeight(slotCutId: string, weight: number | nul
   return { success: true };
 }
 
+export async function updateCutTotalWeight(cutId: string, totalWeight: number | null) {
+  await requireAdmin();
+  const supabase = await createServiceRoleClient();
+
+  // Get all slot_cuts for this cut in claimed slots
+  const { data: slotCuts, error: fetchError } = await supabase
+    .from("slot_cuts")
+    .select("id, slot:slots!inner(is_claimed)")
+    .eq("cut_id", cutId)
+    .eq("slot.is_claimed", true);
+
+  if (fetchError) {
+    return { error: "Failed to fetch slot cuts." };
+  }
+
+  if (!slotCuts || slotCuts.length === 0) {
+    return { error: "No claimed slots have this cut." };
+  }
+
+  const weightPerSlotCut = totalWeight != null ? totalWeight / slotCuts.length : null;
+
+  // Update all slot_cuts for this cut evenly
+  const ids = slotCuts.map((sc) => sc.id);
+  const { error } = await supabase
+    .from("slot_cuts")
+    .update({ actual_weight_kg: weightPerSlotCut })
+    .in("id", ids);
+
+  if (error) {
+    return { error: "Failed to update weights." };
+  }
+
+  revalidatePath("/admin/weights");
+  revalidatePath("/my-order");
+  return { success: true };
+}
+
 // ── Suggestions ─────────────────────────────────────────
 
 export async function updateSuggestionStatus(id: string, status: string) {

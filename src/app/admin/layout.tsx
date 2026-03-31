@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Beef, DollarSign, Home, Scissors, Users, Wallet, Weight } from "lucide-react";
+import { BarChart3, Beef, ClipboardList, DollarSign, Home, Scissors, Users, Wallet, Weight } from "lucide-react";
 
 const ADMIN_LINKS = [
   { href: "/admin", label: "Overview", icon: Home },
   { href: "/admin/status", label: "Status", icon: BarChart3 },
   { href: "/admin/cuts", label: "Cuts", icon: Scissors },
   { href: "/admin/weights", label: "Weights", icon: Weight },
+  { href: "/admin/orders", label: "Orders", icon: ClipboardList },
   { href: "/admin/expenses", label: "Expenses", icon: DollarSign },
   { href: "/admin/payments", label: "Payments", icon: Wallet },
   { href: "/admin/households", label: "Households", icon: Users },
