@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import type { Cut, PrepOption, SlotCut, Slot, Suggestion, Payment, Expense, CowStatus } from "@/lib/types";
-import { splitExpenses, calcTotal } from "@/components/cost-calculator";
+import { splitExpenses, calcTotal } from "@/lib/costs";
 
 export const metadata: Metadata = {
   title: "My Order",

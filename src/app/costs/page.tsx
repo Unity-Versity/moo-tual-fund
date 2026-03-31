@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { CowStatus, Expense } from "@/lib/types";
-import { splitExpenses, calcTotal } from "@/components/cost-calculator";
+import { splitExpenses, calcTotal } from "@/lib/costs";
 
 export const metadata: Metadata = {
   title: "Costs",

@@ -5,40 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Weight, DollarSign, Tag, Lock } from "lucide-react";
 import type { Expense } from "@/lib/types";
+import { splitExpenses, calcTotal } from "@/lib/costs";
 
 const TOTAL_SLOTS = 8;
-const MIN_WEIGHT = 140;
-const MAX_WEIGHT = 160;
-
-export const PROCESSING_CATEGORY = "Processing (per kg)";
-
-export function splitExpenses(expenses: Expense[]) {
-  const fixed: Expense[] = [];
-  let processingRate = 0;
-
-  for (const e of expenses) {
-    if (e.category === PROCESSING_CATEGORY) {
-      processingRate += Number(e.amount);
-    } else {
-      fixed.push(e);
-    }
-  }
-
-  return { fixed, processingRate };
-}
-
-export function calcTotal(
-  fixedExpenses: Expense[],
-  processingRate: number,
-  weight: number
-) {
-  const fixedTotal = fixedExpenses.reduce(
-    (sum, e) => sum + Number(e.amount),
-    0
-  );
-  const processingCost = processingRate * weight;
-  return { fixedTotal, processingCost, total: fixedTotal + processingCost };
-}
+const MIN_WEIGHT = 280;
+const MAX_WEIGHT = 320;
 
 export function CostCalculator({
   expenses,
@@ -48,7 +19,7 @@ export function CostCalculator({
   hangingWeight: number | null;
 }) {
   const isLocked = hangingWeight !== null;
-  const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? 150);
+  const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? 300);
   const activeWeight = isLocked ? hangingWeight : dressedWeight;
 
   const { fixed, processingRate } = splitExpenses(expenses);
