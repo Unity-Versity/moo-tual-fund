@@ -8,8 +8,8 @@ import type { Expense } from "@/lib/types";
 import { splitExpenses, calcTotal } from "@/lib/costs";
 
 const TOTAL_SLOTS = 8;
-const MIN_WEIGHT = 280;
-const MAX_WEIGHT = 320;
+const MIN_WEIGHT = 140;
+const MAX_WEIGHT = 160;
 
 export function CostCalculator({
   expenses,
