@@ -14,8 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, ChevronRight } from "lucide-react";
-import { addExpense, deleteExpense } from "../../../actions";
+import { Loader2, Plus, Trash2, ChevronRight, GripVertical } from "lucide-react";
+import { addExpense, deleteExpense, reorderExpenses } from "../../../actions";
 import type { Expense } from "@/lib/types";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -39,6 +39,8 @@ export default function AdminOfferExpensesPage() {
   const [category, setCategory] = useState("Animal Purchase");
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+  const dragItem = useRef<number | null>(null);
+  const dragOver = useRef<number | null>(null);
 
   const loadExpenses = useCallback(() => {
     const supabase = createClient();
@@ -46,7 +48,7 @@ export default function AdminOfferExpensesPage() {
       .from("expenses")
       .select("*")
       .eq("offer_id", offerId)
-      .order("created_at")
+      .order("display_order")
       .then(({ data }) => {
         if (data) setExpenses(data as Expense[]);
       });
@@ -78,6 +80,27 @@ export default function AdminOfferExpensesPage() {
         setCategory("Animal Purchase");
         loadExpenses();
       }
+    });
+  }
+
+  function handleDragEnd() {
+    if (dragItem.current === null || dragOver.current === null) return;
+    if (dragItem.current === dragOver.current) return;
+
+    const reordered = [...expenses];
+    const [moved] = reordered.splice(dragItem.current, 1);
+    reordered.splice(dragOver.current, 0, moved);
+    setExpenses(reordered);
+
+    dragItem.current = null;
+    dragOver.current = null;
+
+    startTransition(async () => {
+      const result = await reorderExpenses(
+        offerId,
+        reordered.map((e) => e.id)
+      );
+      if (result.error) toast.error(result.error);
     });
   }
 
@@ -153,11 +176,22 @@ export default function AdminOfferExpensesPage() {
             <p className="py-4 text-center text-sm text-muted-foreground">No expenses yet.</p>
           ) : (
             <div className="space-y-2">
-              {expenses.map((e) => (
-                <div key={e.id} className="flex items-center justify-between rounded-md border p-2">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{e.description}</p>
-                    <Badge variant="outline" className="text-xs">{e.category}</Badge>
+              {expenses.map((e, i) => (
+                <div
+                  key={e.id}
+                  draggable
+                  onDragStart={() => { dragItem.current = i; }}
+                  onDragEnter={() => { dragOver.current = i; }}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(ev) => ev.preventDefault()}
+                  className="flex cursor-grab items-center justify-between rounded-md border p-2 active:cursor-grabbing"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{e.description}</p>
+                      <Badge variant="outline" className="text-xs">{e.category}</Badge>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold">

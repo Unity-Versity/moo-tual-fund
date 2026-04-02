@@ -139,6 +139,7 @@ export interface Expense {
   amount: number;
   category: string;
   offer_id: string | null;
+  display_order: number;
   created_at: string;
 }
 

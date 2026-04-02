@@ -362,11 +362,23 @@ export async function addExpense(offerId: string, formData: FormData) {
 
   const supabase = await createServiceRoleClient();
 
+  // New expenses go to the end
+  const { data: maxRow } = await supabase
+    .from("expenses")
+    .select("display_order")
+    .eq("offer_id", offerId)
+    .order("display_order", { ascending: false })
+    .limit(1)
+    .single();
+
+  const nextOrder = (maxRow?.display_order ?? 0) + 1;
+
   const { error } = await supabase.from("expenses").insert({
     description: parsed.data.description,
     amount: parsed.data.amount,
     category: parsed.data.category,
     offer_id: offerId,
+    display_order: nextOrder,
   });
 
   if (error) {
@@ -390,6 +402,34 @@ export async function deleteExpense(offerId: string, id: string) {
 
   revalidatePath(`/admin/offers/${offerId}/expenses`);
   revalidatePath(`/offers/${offerId}/costs`);
+  return { success: true };
+}
+
+export async function reorderExpenses(
+  offerId: string,
+  orderedIds: string[]
+) {
+  await requireAdmin();
+  const supabase = await createServiceRoleClient();
+
+  const updates = orderedIds.map((id, i) =>
+    supabase
+      .from("expenses")
+      .update({ display_order: i + 1 })
+      .eq("id", id)
+      .eq("offer_id", offerId)
+  );
+
+  const results = await Promise.all(updates);
+  const failed = results.find((r) => r.error);
+
+  if (failed?.error) {
+    return { error: "Failed to reorder expenses." };
+  }
+
+  revalidatePath(`/admin/offers/${offerId}/expenses`);
+  revalidatePath(`/offers/${offerId}/costs`);
+  revalidatePath(`/offers/${offerId}`);
   return { success: true };
 }
 
@@ -586,6 +626,12 @@ export async function updateCutTotalWeight(offerId: string, cutId: string, anima
     return { error: "Failed to update weights." };
   }
 
+  // Keep est_weight_per_slot_kg in sync so all views show consistent data
+  await supabase
+    .from("offer_cuts")
+    .update({ est_weight_per_slot_kg: weightPerSlotCut ?? 0 })
+    .eq("id", cutId);
+
   revalidatePath(`/admin/offers/${offerId}/weights`);
   revalidatePath(`/offers/${offerId}/my-order`);
   return { success: true };
@@ -621,6 +667,12 @@ export async function updateCutTotalWeightAll(offerId: string, cutId: string, to
   if (error) {
     return { error: "Failed to update weights." };
   }
+
+  // Keep est_weight_per_slot_kg in sync so all views show consistent data
+  await supabase
+    .from("offer_cuts")
+    .update({ est_weight_per_slot_kg: weightPerSlotCut ?? 0 })
+    .eq("id", cutId);
 
   revalidatePath(`/admin/offers/${offerId}/weights`);
   revalidatePath(`/offers/${offerId}/my-order`);

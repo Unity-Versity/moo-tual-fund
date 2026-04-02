@@ -23,9 +23,9 @@ export function CostCalculator({
   shareSize: string;
   weightsConfirmed?: boolean;
 }) {
-  const isLocked = hangingWeight !== null;
+  const isLocked = weightsConfirmed === true;
   const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? 150);
-  const activeWeight = isLocked ? hangingWeight : dressedWeight;
+  const activeWeight = isLocked && hangingWeight !== null ? hangingWeight : dressedWeight;
 
   const { fixed, processingRate } = splitExpenses(expenses);
   const { processingCost, total } = calcTotal(
@@ -120,7 +120,7 @@ export function CostCalculator({
               {weightPerSlot.toFixed(1)}kg
             </p>
             <p className="text-[11px] leading-tight text-muted-foreground">
-              Your {shareSize}{estLabel}
+              Per {shareSize}{estLabel}
             </p>
           </CardContent>
         </Card>
@@ -151,8 +151,8 @@ export function CostCalculator({
       <p className="text-center text-xs text-muted-foreground">
         {isLocked
           ? `Based on ${hangingWeight}kg confirmed dressed weight, split ${totalSlots} ways.`
-          : "Drag to estimate. Locks when actual weight is confirmed."}{" "}
-        Kg per share is dressed weight — take-home meat will be less.
+          : "Estimate will be updated with actual hanging when we get to that stage."}{" "}
+        All numbers are based off dressed weight.
       </p>
     </div>
   );

@@ -20,7 +20,7 @@ async function getData(offerId: string) {
     supabase.from("offers").select("*").eq("id", offerId).single(),
     supabase.from("offer_slots").select("*, household:households(name)").eq("offer_id", offerId),
     supabase.from("offer_animals").select("*").eq("offer_id", offerId).order("animal_number"),
-    supabase.from("expenses").select("*").eq("offer_id", offerId).order("created_at"),
+    supabase.from("expenses").select("*").eq("offer_id", offerId).order("display_order"),
   ]);
 
   return {
@@ -196,7 +196,7 @@ export default async function OfferDetailPage({
           )}
           {hangingWeight && (
             <div className="rounded-md bg-muted/50 px-3 py-2">
-              <p className="text-xs text-muted-foreground">Total Hanging Weight</p>
+              <p className="text-xs text-muted-foreground">Total Hanging Weight{!offer.weights_confirmed && " (est.)"}</p>
               <p className="font-medium">{hangingWeight} kg</p>
             </div>
           )}
@@ -245,7 +245,7 @@ export default async function OfferDetailPage({
           <div>
             <h3 className="text-sm font-semibold">Bones &amp; Tallow</h3>
             <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">
-              Bones and fat go to stock and tallow. Want some? Add a note to your order.
+              Bones, fat and trimmings are being reclaimed by Corey. If you want some tallow or a couple of dog bones, just leave it in the notes.
             </p>
           </div>
         </CardContent>

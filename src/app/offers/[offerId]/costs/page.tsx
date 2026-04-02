@@ -21,7 +21,7 @@ async function getData(offerId: string) {
   const [offerRes, animalsRes, expensesRes] = await Promise.all([
     supabase.from("offers").select("*").eq("id", offerId).single(),
     supabase.from("offer_animals").select("*").eq("offer_id", offerId),
-    supabase.from("expenses").select("*").eq("offer_id", offerId).order("created_at"),
+    supabase.from("expenses").select("*").eq("offer_id", offerId).order("display_order"),
   ]);
 
   return {
