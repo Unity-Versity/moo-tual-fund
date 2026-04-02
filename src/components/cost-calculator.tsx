@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Weight, DollarSign, Tag, Lock } from "lucide-react";
+import {
+  Weight,
+  DollarSign,
+  Tag,
+  Lock,
+  ChevronDown,
+} from "lucide-react";
 import type { Expense } from "@/lib/types";
 import { splitExpenses, calcTotal } from "@/lib/costs";
 
@@ -24,8 +30,11 @@ export function CostCalculator({
   weightsConfirmed?: boolean;
 }) {
   const isLocked = weightsConfirmed === true;
-  const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? MIN_WEIGHT);
-  const activeWeight = isLocked && hangingWeight !== null ? hangingWeight : dressedWeight;
+  const [dressedWeight, setDressedWeight] = useState(
+    hangingWeight ?? MIN_WEIGHT
+  );
+  const activeWeight =
+    isLocked && hangingWeight !== null ? hangingWeight : dressedWeight;
 
   const { fixed, processingRate } = splitExpenses(expenses);
   const { processingCost, total } = calcTotal(
@@ -53,25 +62,24 @@ export function CostCalculator({
 
   return (
     <div className="space-y-5">
-      {/* Expense line items */}
-      <div className="space-y-2 text-sm">
-        {fixed.map((e) => (
-          <div key={e.id} className="flex items-center justify-between">
-            <span className="text-muted-foreground">{e.description}</span>
-            <span className="font-medium">${Number(e.amount).toFixed(0)}</span>
-          </div>
-        ))}
-        {processingRate > 0 && (
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">
-              Processing (${processingRate.toFixed(2)}/kg)
-            </span>
-            <span className="font-medium">${processingCost.toFixed(0)}</span>
-          </div>
-        )}
-        <div className="flex items-center justify-between border-t pt-2 font-semibold">
-          <span>Total</span>
-          <span>${total.toFixed(0)}</span>
+      {/* Hero: Your Share */}
+      <div className="flex flex-col items-center gap-1 py-2">
+        <p className="text-sm font-medium text-muted-foreground">
+          Your {shareSize} Share{estLabel}
+        </p>
+        <p className="text-4xl font-bold tabular-nums tracking-tight">
+          ${costPerSlot.toFixed(0)}
+        </p>
+        <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Weight className="h-3.5 w-3.5" />
+            {weightPerSlot.toFixed(1)}kg
+          </span>
+          <span className="text-border">|</span>
+          <span className="flex items-center gap-1">
+            <Tag className="h-3.5 w-3.5" />
+            ${costPerKg.toFixed(2)}/kg
+          </span>
         </div>
       </div>
 
@@ -111,47 +119,38 @@ export function CostCalculator({
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="flex flex-col items-center p-3 text-center">
-            <Weight className="mb-1 h-5 w-5 text-primary" />
-            <p className="text-lg font-bold tabular-nums">
-              {weightPerSlot.toFixed(1)}kg
-            </p>
-            <p className="text-[11px] leading-tight text-muted-foreground">
-              Per {shareSize}{estLabel}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col items-center p-3 text-center">
-            <DollarSign className="mb-1 h-5 w-5 text-accent" />
-            <p className="text-lg font-bold tabular-nums">
-              ${costPerSlot.toFixed(0)}
-            </p>
-            <p className="text-[11px] leading-tight text-muted-foreground">
-              Per Share{estLabel}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col items-center p-3 text-center">
-            <Tag className="mb-1 h-5 w-5 text-primary" />
-            <p className="text-lg font-bold tabular-nums">
-              ${costPerKg.toFixed(2)}
-            </p>
-            <p className="text-[11px] leading-tight text-muted-foreground">
-              Per kg{estLabel}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Collapsible Full Breakdown */}
+      <details className="group rounded-lg border bg-muted/30">
+        <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+          Full Breakdown
+          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="space-y-2 border-t px-4 py-3 text-sm">
+          {fixed.map((e) => (
+            <div key={e.id} className="flex items-center justify-between">
+              <span className="text-muted-foreground">{e.description}</span>
+              <span className="font-medium">${Number(e.amount).toFixed(0)}</span>
+            </div>
+          ))}
+          {processingRate > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">
+                Processing (${processingRate.toFixed(2)}/kg)
+              </span>
+              <span className="font-medium">${processingCost.toFixed(0)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between border-t pt-2 font-semibold">
+            <span>Total ({totalSlots} shares)</span>
+            <span>${total.toFixed(0)}</span>
+          </div>
+        </div>
+      </details>
 
       <p className="text-center text-xs text-muted-foreground">
         {isLocked
           ? `Based on ${hangingWeight}kg confirmed dressed weight, split ${totalSlots} ways.`
-          : "All estimates are calculated off the low end of the range — actual costs may come in under."}{" "}
+          : "Estimates based on the low end of the range — actual costs may come in under."}{" "}
         All numbers are based off dressed weight.
       </p>
     </div>
