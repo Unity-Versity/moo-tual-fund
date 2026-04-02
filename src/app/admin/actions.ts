@@ -641,6 +641,17 @@ export async function updateCutTotalWeightAll(offerId: string, cutId: string, to
   await requireAdmin();
   const supabase = await createServiceRoleClient();
 
+  // Get total_slots from the offer (the true divisor for per-share weight)
+  const { data: offer, error: offerError } = await supabase
+    .from("offers")
+    .select("total_slots")
+    .eq("id", offerId)
+    .single();
+
+  if (offerError || !offer) {
+    return { error: "Failed to fetch offer." };
+  }
+
   // Get all slot_cuts for this cut across ALL claimed slots
   const { data: slotCuts, error: fetchError } = await supabase
     .from("offer_slot_cuts")
@@ -656,7 +667,8 @@ export async function updateCutTotalWeightAll(offerId: string, cutId: string, to
     return { success: true };
   }
 
-  const weightPerSlotCut = totalWeight != null ? totalWeight / slotCuts.length : null;
+  // Divide by total slots (all shares), not just claimed ones
+  const weightPerSlotCut = totalWeight != null ? totalWeight / offer.total_slots : null;
 
   const ids = slotCuts.map((sc) => sc.id);
   const { error } = await supabase

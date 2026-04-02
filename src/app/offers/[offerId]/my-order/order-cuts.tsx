@@ -30,7 +30,7 @@ function formatWeight(kg: number | null, isEstimate: boolean): string {
 
 function getPrepLabel(label: string): string {
   if (label.toLowerCase() === "raw" || label.toLowerCase().startsWith("raw ")) {
-    return `[Raw]`;
+    return `[${label}]`;
   }
   return `Ready to Eat [${label}]`;
 }
@@ -48,13 +48,17 @@ export function OrderCuts({
 }) {
   const isEstimate = !weightsConfirmed;
 
-  // Split into two zones
+  // Split into three zones
+  const bbqCuts = slotCuts.filter((sc) => sc.cut.category === "smoked");
+
   const noPrepCuts = slotCuts.filter((sc) => {
+    if (sc.cut.category === "smoked") return false;
     const cutPreps = prepOptions.filter((po) => po.offer_cut_id === sc.cut_id);
     return !sc.cut.is_processable || cutPreps.length === 0;
   });
 
   const prepCuts = slotCuts.filter((sc) => {
+    if (sc.cut.category === "smoked") return false;
     const cutPreps = prepOptions.filter((po) => po.offer_cut_id === sc.cut_id);
     return sc.cut.is_processable && cutPreps.length > 0;
   });
@@ -82,8 +86,49 @@ export function OrderCuts({
     });
   }
 
+  const bbqDeduplicated = deduplicateCuts(bbqCuts);
+
   return (
     <div className="space-y-6">
+      {/* Zone: Texas BBQ — pre-cooked, no prep choice */}
+      {bbqDeduplicated.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">
+              Texas BBQ Style — Pre-Cooked Only
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Smoked low &amp; slow. No prep options — these come ready to eat.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            {bbqDeduplicated.map((sc) => {
+              const weight = formatWeight(
+                sc.actual_weight_kg ?? sc.cut.est_weight_per_slot_kg,
+                sc.actual_weight_kg == null && isEstimate
+              );
+              return (
+                <Card key={sc.id}>
+                  <CardContent className="flex items-center justify-between p-3">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">{sc.cut.name}</p>
+                      {sc.cut.portions_per_slot > 1 && (
+                        <Badge variant="outline" className="text-xs">
+                          Portion {sc.portion_number}/{sc.cut.portions_per_slot}
+                        </Badge>
+                      )}
+                    </div>
+                    {weight && (
+                      <span className="text-xs text-muted-foreground">{weight}</span>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Zone 1: Standard Cuts (no prep options) */}
       {noPrepGrouped.length > 0 && (
         <div className="space-y-4">
@@ -158,7 +203,7 @@ export function OrderCuts({
         </div>
       )}
 
-      {noPrepGrouped.length === 0 && prepGrouped.length === 0 && (
+      {bbqDeduplicated.length === 0 && noPrepGrouped.length === 0 && prepGrouped.length === 0 && (
         <p className="text-sm text-muted-foreground">
           No cuts available yet. Check back soon.
         </p>

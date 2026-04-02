@@ -27,6 +27,7 @@ interface CutWithWeight {
   portions_per_slot: number;
   total_weight: number | null;
   slot_count: number;
+  total_slots: number;
 }
 
 export default function AdminOfferWeightsPage() {
@@ -42,15 +43,17 @@ export default function AdminOfferWeightsPage() {
     async function load() {
       const supabase = createClient();
 
-      const [cutsRes, slotsRes, slotCutsRes] = await Promise.all([
+      const [cutsRes, slotsRes, slotCutsRes, offerRes] = await Promise.all([
         supabase.from("offer_cuts").select("id, name, category, portions_per_slot, display_order").eq("offer_id", offerId).order("display_order"),
         supabase.from("offer_slots").select("id, is_claimed").eq("offer_id", offerId).eq("is_claimed", true),
         supabase.from("offer_slot_cuts").select("id, cut_id, actual_weight_kg, slot_id"),
+        supabase.from("offers").select("total_slots").eq("id", offerId).single(),
       ]);
 
       const cutsData = cutsRes.data ?? [];
       const slotsData = slotsRes.data ?? [];
       const slotCutsData = slotCutsRes.data ?? [];
+      const totalSlots = offerRes.data?.total_slots ?? 0;
 
       const claimedSlotIds = new Set(slotsData.map((s) => s.id));
 
@@ -58,12 +61,11 @@ export default function AdminOfferWeightsPage() {
         const cutSlotCuts = slotCutsData.filter(
           (sc) => sc.cut_id === cut.id && claimedSlotIds.has(sc.slot_id)
         );
-        const totalWeight = cutSlotCuts.every((sc) => sc.actual_weight_kg == null)
-          ? null
-          : cutSlotCuts.reduce(
-              (sum, sc) => sum + (Number(sc.actual_weight_kg) || 0),
-              0
-            );
+        // Reconstruct total weight from per-slot values × total slots (not just claimed)
+        const perSlotWeight = cutSlotCuts.length > 0 && cutSlotCuts[0].actual_weight_kg != null
+          ? Number(cutSlotCuts[0].actual_weight_kg)
+          : null;
+        const totalWeight = perSlotWeight != null ? perSlotWeight * totalSlots : null;
 
         return {
           id: cut.id,
@@ -72,6 +74,7 @@ export default function AdminOfferWeightsPage() {
           portions_per_slot: cut.portions_per_slot,
           total_weight: totalWeight,
           slot_count: cutSlotCuts.length,
+          total_slots: totalSlots,
         };
       });
 
@@ -146,8 +149,8 @@ export default function AdminOfferWeightsPage() {
           </h4>
           {group.items.map((cut) => {
             const isSaved = savedKeys.has(cut.id);
-            const perSlot = cut.total_weight != null && cut.slot_count > 0
-              ? (cut.total_weight / cut.slot_count).toFixed(2)
+            const perSlot = cut.total_weight != null && cut.total_slots > 0
+              ? (cut.total_weight / cut.total_slots).toFixed(2)
               : null;
 
             return (
@@ -157,7 +160,7 @@ export default function AdminOfferWeightsPage() {
                     <p className="text-sm font-medium">{cut.name}</p>
                     {perSlot && (
                       <p className="text-xs text-muted-foreground">
-                        {perSlot}kg/slot &bull; {cut.slot_count} slots
+                        {perSlot}kg/share &bull; {cut.total_slots} shares
                       </p>
                     )}
                   </div>
@@ -188,7 +191,7 @@ export default function AdminOfferWeightsPage() {
       {cuts.length > 0 && (() => {
         const filledCuts = cuts.filter((c) => c.total_weight != null);
         const totalWeight = filledCuts.reduce((s, c) => s + (c.total_weight ?? 0), 0);
-        const slotCount = cuts[0]?.slot_count ?? 0;
+        const slotCount = cuts[0]?.total_slots ?? 0;
         const totalPerSlot = slotCount > 0 ? totalWeight / slotCount : 0;
 
         return (
