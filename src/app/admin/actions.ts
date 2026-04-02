@@ -571,7 +571,42 @@ export async function updateCutTotalWeight(offerId: string, cutId: string, anima
   }
 
   if (!slotCuts || slotCuts.length === 0) {
-    // If no claimed slots, just succeed silently
+    return { success: true };
+  }
+
+  const weightPerSlotCut = totalWeight != null ? totalWeight / slotCuts.length : null;
+
+  const ids = slotCuts.map((sc) => sc.id);
+  const { error } = await supabase
+    .from("offer_slot_cuts")
+    .update({ actual_weight_kg: weightPerSlotCut })
+    .in("id", ids);
+
+  if (error) {
+    return { error: "Failed to update weights." };
+  }
+
+  revalidatePath(`/admin/offers/${offerId}/weights`);
+  revalidatePath(`/offers/${offerId}/my-order`);
+  return { success: true };
+}
+
+export async function updateCutTotalWeightAll(offerId: string, cutId: string, totalWeight: number | null) {
+  await requireAdmin();
+  const supabase = await createServiceRoleClient();
+
+  // Get all slot_cuts for this cut across ALL claimed slots
+  const { data: slotCuts, error: fetchError } = await supabase
+    .from("offer_slot_cuts")
+    .select("id, slot:offer_slots!inner(is_claimed)")
+    .eq("cut_id", cutId)
+    .eq("slot.is_claimed", true);
+
+  if (fetchError) {
+    return { error: "Failed to fetch slot cuts." };
+  }
+
+  if (!slotCuts || slotCuts.length === 0) {
     return { success: true };
   }
 

@@ -114,7 +114,7 @@ export default function AdminOfferDetailPage() {
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success(`Animal count updated to ${newCount}!`);
+        toast.success(`${beastLabel} count updated to ${newCount}!`);
         // Reload
         const supabase = createClient();
         const [offerRes, animalsRes] = await Promise.all([
@@ -152,6 +152,9 @@ export default function AdminOfferDetailPage() {
       </div>
     );
   }
+
+  const beastLabel = offer.animal_type === "beef" ? "Beast" : "Animal";
+  const beastLabelLower = beastLabel.toLowerCase();
 
   return (
     <div className="space-y-4">
@@ -267,13 +270,13 @@ export default function AdminOfferDetailPage() {
       {/* Animal Count */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Animals</CardTitle>
+          <CardTitle className="text-base">{beastLabel}s</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm font-medium">
-                {offer.animal_count} animal{offer.animal_count > 1 ? "s" : ""} &bull;{" "}
+                {offer.animal_count} {beastLabelLower}{offer.animal_count > 1 ? "s" : ""} &bull;{" "}
                 {offer.share_size} shares &bull;{" "}
                 {offer.total_slots} total slots
               </p>
@@ -328,7 +331,7 @@ export default function AdminOfferDetailPage() {
             {animals.map((animal) => (
               <div key={animal.id} className="rounded-md border p-3">
                 <p className="text-sm font-semibold mb-2">
-                  Animal {animal.animal_number} of {offer.animal_count}
+                  {beastLabel} {animal.animal_number} of {offer.animal_count}
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">

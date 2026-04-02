@@ -102,7 +102,7 @@ export default async function OffersPage() {
 
                       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span>{ANIMAL_LABELS[offer.animal_type]}</span>
-                        <span>{offer.animal_count} animal{offer.animal_count > 1 ? "s" : ""}</span>
+                        <span>{offer.animal_count} {offer.animal_type === "beef" ? "beast" : "animal"}{offer.animal_count > 1 ? "s" : ""}</span>
                         <span>{offer.share_size} shares</span>
                         <span>
                           {available > 0

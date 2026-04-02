@@ -124,7 +124,7 @@ export default async function OfferDetailPage({
         )}
         <div className="mt-2 flex flex-wrap gap-2">
           <Badge variant="outline">{ANIMAL_LABELS[offer.animal_type]}</Badge>
-          <Badge variant="outline">{offer.animal_count} animal{offer.animal_count > 1 ? "s" : ""}</Badge>
+          <Badge variant="outline">{offer.animal_count} {offer.animal_type === "beef" ? "beast" : "animal"}{offer.animal_count > 1 ? "s" : ""}</Badge>
           <Badge variant="outline">{offer.share_size} shares</Badge>
           <Badge
             variant="outline"
