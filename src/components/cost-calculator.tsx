@@ -7,8 +7,8 @@ import { Weight, DollarSign, Tag, Lock } from "lucide-react";
 import type { Expense } from "@/lib/types";
 import { splitExpenses, calcTotal } from "@/lib/costs";
 
-const MIN_WEIGHT = 300;
-const MAX_WEIGHT = 340;
+const MIN_WEIGHT = 150;
+const MAX_WEIGHT = 170;
 
 export function CostCalculator({
   expenses,
