@@ -7,8 +7,8 @@ import { Weight, DollarSign, Tag, Lock } from "lucide-react";
 import type { Expense } from "@/lib/types";
 import { splitExpenses, calcTotal } from "@/lib/costs";
 
-const MIN_WEIGHT = 100;
-const MAX_WEIGHT = 200;
+const MIN_WEIGHT = 300;
+const MAX_WEIGHT = 340;
 
 export function CostCalculator({
   expenses,
@@ -24,7 +24,7 @@ export function CostCalculator({
   weightsConfirmed?: boolean;
 }) {
   const isLocked = weightsConfirmed === true;
-  const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? 150);
+  const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? MIN_WEIGHT);
   const activeWeight = isLocked && hangingWeight !== null ? hangingWeight : dressedWeight;
 
   const { fixed, processingRate } = splitExpenses(expenses);
@@ -151,7 +151,7 @@ export function CostCalculator({
       <p className="text-center text-xs text-muted-foreground">
         {isLocked
           ? `Based on ${hangingWeight}kg confirmed dressed weight, split ${totalSlots} ways.`
-          : "Estimate will be updated with actual hanging when we get to that stage."}{" "}
+          : "All estimates are calculated off the low end of the range — actual costs may come in under."}{" "}
         All numbers are based off dressed weight.
       </p>
     </div>
