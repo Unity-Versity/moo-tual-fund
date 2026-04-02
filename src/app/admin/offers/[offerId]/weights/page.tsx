@@ -184,6 +184,37 @@ export default function AdminOfferWeightsPage() {
         </div>
       ))}
 
+      {/* ── Totals ── */}
+      {cuts.length > 0 && (() => {
+        const filledCuts = cuts.filter((c) => c.total_weight != null);
+        const totalWeight = filledCuts.reduce((s, c) => s + (c.total_weight ?? 0), 0);
+        const slotCount = cuts[0]?.slot_count ?? 0;
+        const totalPerSlot = slotCount > 0 ? totalWeight / slotCount : 0;
+
+        return (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold">Total Entered</p>
+                  <p className="text-xs text-muted-foreground">
+                    {filledCuts.length} of {cuts.length} cuts weighed
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold tabular-nums">{totalWeight.toFixed(2)} kg</p>
+                  {slotCount > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {totalPerSlot.toFixed(2)} kg/slot &bull; {slotCount} slots
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {cuts.length === 0 && (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No cuts defined yet. Add cuts first.

@@ -72,7 +72,7 @@ export default async function RootLayout({
           {children}
         </main>
         <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-          Moo-tual Fund &bull; No cows were harmed in the making of this website. Well, one was. 🐄
+          Moo-tual Fund
         </footer>
         <Toaster />
       </body>
