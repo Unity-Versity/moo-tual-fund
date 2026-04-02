@@ -162,31 +162,21 @@ export default async function OfferDetailPage({
         <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
           <li>
             <strong className="text-foreground">Claim your share</strong> —
-            head to{" "}
+            pick your size on the{" "}
             <Link href={`/offers/${offer.id}/my-order`} className="font-medium text-primary underline">
-              your order page
-            </Link>{" "}
-            and grab your {offer.share_size} share.
-          </li>
-          <li>
-            <strong className="text-foreground">Choose your prep options</strong>{" "}
-            — pick how you want things like mince and slow-cook cuts prepared.
-          </li>
-          <li>
-            <strong className="text-foreground">Wait for the final price</strong>{" "}
-            — once we get the actual dressed weight back from the butcher,
-            the exact share price gets calculated automatically.
-          </li>
-          <li>
-            <strong className="text-foreground">Pay up</strong> — payment
-            details will be on the{" "}
-            <Link href={`/offers/${offer.id}/costs`} className="font-medium text-primary underline">
-              costs page
+              order page
             </Link>.
           </li>
           <li>
-            <strong className="text-foreground">Make some freezer space</strong>{" "}
-            — you&apos;ll need roughly one to two shelves of a standard freezer.
+            <strong className="text-foreground">Choose your prep</strong>{" "}
+            — select how you want each cut prepared.
+          </li>
+          <li>
+            <strong className="text-foreground">Pay when priced</strong>{" "}
+            — final cost locks in after weigh-in. Details on the{" "}
+            <Link href={`/offers/${offer.id}/costs`} className="font-medium text-primary underline">
+              costs page
+            </Link>.
           </li>
         </ol>
       </section>
@@ -235,8 +225,7 @@ export default async function OfferDetailPage({
       <section>
         <h2 className="mb-2 text-lg font-bold">The Numbers</h2>
         <p className="mb-5 text-sm text-muted-foreground">
-          Here&apos;s where the money goes. Drag the slider to see how costs
-          work out at different dressed weights.
+          Drag the slider to estimate costs at different dressed weights.
         </p>
         <CostCalculator
           expenses={expenses}
@@ -256,35 +245,7 @@ export default async function OfferDetailPage({
           <div>
             <h3 className="text-sm font-semibold">Bones &amp; Tallow</h3>
             <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">
-              All bones go to stock and all fat to tallow. If you&apos;d like
-              some bones for a furry friend or a jar of tallow for the kitchen,
-              just add a note to your order.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Separator />
-
-      {/* ── Good to Know ── */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Good to Know</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <p className="text-sm font-medium">Shelf life</p>
-            <p className="text-sm text-muted-foreground">
-              Vacuum-sealed meat keeps for 12+ months in the freezer. No rush
-              to get through it.
-            </p>
-          </div>
-          <Separator />
-          <div>
-            <p className="text-sm font-medium">Custom requests</p>
-            <p className="text-sm text-muted-foreground">
-              Every share gets the same cuts. If you have a preference,
-              drop a suggestion on your order page.
+              Bones and fat go to stock and tallow. Want some? Add a note to your order.
             </p>
           </div>
         </CardContent>

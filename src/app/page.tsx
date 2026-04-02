@@ -19,9 +19,7 @@ export default async function HomePage() {
           {displayName ? `Hey ${displayName}` : "Hey"} 👋
         </h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Welcome to <strong className="text-foreground">Moo-tual Fund</strong> — a
-          small group of family and friends who go in together on whole animals
-          direct from local farmers. No shop, no middlemen, no markup.
+          Friends splitting whole animals from local farms. No middlemen, no markup.
         </p>
       </section>
 
@@ -33,17 +31,17 @@ export default async function HomePage() {
             {
               icon: Beef,
               title: "We source whole animals",
-              desc: "Beef, lamb, pork — sourced from local farmers we trust. We know exactly where it comes from.",
+              desc: "Beef, lamb, pork — direct from local farmers.",
             },
             {
               icon: Users,
-              title: "We split it as a group",
-              desc: "Each group buy is listed as an offer. Claim your share (1/4, 1/8, etc.) and choose how you want your cuts prepared.",
+              title: "You claim a share",
+              desc: "Pick your size, choose your prep options.",
             },
             {
               icon: Heart,
-              title: "Everyone wins",
-              desc: "You get premium, ethically sourced meat at bulk prices. Vacuum-sealed and freezer-ready.",
+              title: "You save",
+              desc: "Bulk pricing, vacuum-sealed, freezer-ready.",
             },
           ].map((item) => (
             <Card key={item.title}>
@@ -58,26 +56,6 @@ export default async function HomePage() {
               </CardContent>
             </Card>
           ))}
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* ── The Philosophy ── */}
-      <section>
-        <h2 className="mb-3 text-lg font-bold">Why We Do This</h2>
-        <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
-          <p>
-            Corey does this for his family anyway — by getting more people on board,
-            everyone benefits from the bulk pricing. It&apos;s almost no extra work and
-            nobody profits. The only perk the organiser claims is the bits that
-            would otherwise go to waste — bones for marrow and broth, fat for tallow,
-            and offcuts for salami.
-          </p>
-          <p>
-            The goal is simple: make it as cost-effective as possible while being
-            mindful about where the animal comes from and supporting local producers.
-          </p>
         </div>
       </section>
 
@@ -105,8 +83,7 @@ export default async function HomePage() {
           ))}
         </div>
         <p className="mt-3 text-sm text-muted-foreground">
-          Every share is the same proportional split. Vacuum-sealed and freezer-ready
-          — keeps for 12+ months.
+          Same proportional split per share. Keeps 12+ months frozen.
         </p>
       </section>
 
@@ -119,8 +96,7 @@ export default async function HomePage() {
           <div>
             <h3 className="text-sm font-semibold">Supporting Local</h3>
             <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">
-              Every animal is sourced from local farmers. You know exactly where your
-              meat comes from, how it was raised, and who processed it.
+              Full traceability — farm, producer, and processor.
             </p>
           </div>
         </CardContent>

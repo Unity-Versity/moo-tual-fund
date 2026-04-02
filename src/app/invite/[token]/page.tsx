@@ -4,7 +4,7 @@ import { SetPinForm } from "./set-pin-form";
 
 export const metadata = {
   title: "Set Your PIN",
-  description: "You've been invited to join Moo-tual Fund. Set your PIN to get started.",
+  description: "Set your PIN to get started.",
 };
 
 export default async function InvitePage({

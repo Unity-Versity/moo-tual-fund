@@ -86,9 +86,9 @@ export default function LoginPage() {
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Lock className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle>The Boss is Here 🤠</CardTitle>
+            <CardTitle>Admin Login 🤠</CardTitle>
             <CardDescription>
-              Confirm your identity, ranch master.
+              Confirm your identity.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -148,7 +148,7 @@ export default function LoginPage() {
           </div>
           <CardTitle>Got Beef?</CardTitle>
           <CardDescription>
-            Enter your PIN to get moo-ving.
+            Enter your PIN to continue.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -172,7 +172,7 @@ export default function LoginPage() {
               <p role="alert" className="text-sm text-destructive">{error}</p>
             )}
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
-              {loading ? "Checking the paddock..." : "Let's Go! 🐄"}
+              {loading ? "Checking..." : "Let's Go! 🐄"}
             </Button>
           </form>
         </CardContent>

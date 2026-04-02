@@ -151,8 +151,8 @@ export function CostCalculator({
       <p className="text-center text-xs text-muted-foreground">
         {isLocked
           ? `Based on ${hangingWeight}kg confirmed dressed weight, split ${totalSlots} ways.`
-          : "Drag the slider to estimate costs at different dressed weights. Numbers lock once the actual weight is confirmed."}{" "}
-        The estimated kg per share is dressed weight (includes bone and fat — actual take-home meat will be less).
+          : "Drag to estimate. Locks when actual weight is confirmed."}{" "}
+        Kg per share is dressed weight — take-home meat will be less.
       </p>
     </div>
   );

@@ -72,7 +72,7 @@ export default async function CostsPage({
       <div>
         <h1 className="text-2xl font-bold">Costs</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Everything we&apos;ve spent so far on {offer.title}.
+          Cost breakdown for {offer.title}.
         </p>
       </div>
 

@@ -212,8 +212,7 @@ export default async function MyOrderPage({
           <div>
             <h2 className="mb-3 text-lg font-bold">Cut Preferences 💬</h2>
             <p className="mb-3 text-sm text-muted-foreground">
-              Every pack gets the same cuts, but let us know if there&apos;s something
-              you&apos;d really rather not receive. No promises, but we&apos;ll do our best!
+              Got a cut you&apos;d rather skip? Let us know — no guarantees, but we&apos;ll try.
             </p>
             <SuggestionForm offerId={offer.id} suggestions={suggestions} />
           </div>

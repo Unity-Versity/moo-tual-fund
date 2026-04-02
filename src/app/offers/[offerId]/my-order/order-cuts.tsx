@@ -92,7 +92,7 @@ export function OrderCuts({
               Your Cuts
             </h3>
             <p className="text-xs text-muted-foreground">
-              These come as-is with your share.
+              Included with your share.
             </p>
           </div>
           {noPrepGrouped.map((group) => (
@@ -136,7 +136,7 @@ export function OrderCuts({
               Prepared Cuts
             </h3>
             <p className="text-xs text-muted-foreground">
-              Choose how you want each cut prepared. Everything is pre-cooked and ready to eat unless you select Raw.
+              Pick your prep. Default is ready-to-eat.
             </p>
           </div>
           {prepGrouped.map((group) => (

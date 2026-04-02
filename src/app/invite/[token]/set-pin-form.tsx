@@ -78,8 +78,7 @@ export function SetPinForm({
         </div>
         <CardTitle>Welcome, {householdName}! 🐄</CardTitle>
         <CardDescription>
-          You&apos;ve been invited to Moo-tual Fund. Choose a PIN so you can log
-          back in any time.
+          Set a PIN to log in.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -123,7 +122,7 @@ export function SetPinForm({
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
             disabled={loading}
           >
-            {loading ? "Setting up your paddock..." : "I'm In! 🐄"}
+            {loading ? "Setting up..." : "I'm In! 🐄"}
           </Button>
         </form>
       </CardContent>
