@@ -61,11 +61,13 @@ export default function AdminOfferWeightsPage() {
         const cutSlotCuts = slotCutsData.filter(
           (sc) => sc.cut_id === cut.id && claimedSlotIds.has(sc.slot_id)
         );
-        // Reconstruct total weight from per-slot values × total slots (not just claimed)
-        const perSlotWeight = cutSlotCuts.length > 0 && cutSlotCuts[0].actual_weight_kg != null
+        // Reconstruct total weight: per-slot-cut × total_slots × portions_per_slot
+        const perSlotCutWeight = cutSlotCuts.length > 0 && cutSlotCuts[0].actual_weight_kg != null
           ? Number(cutSlotCuts[0].actual_weight_kg)
           : null;
-        const totalWeight = perSlotWeight != null ? perSlotWeight * totalSlots : null;
+        const totalWeight = perSlotCutWeight != null
+          ? perSlotCutWeight * totalSlots * cut.portions_per_slot
+          : null;
 
         return {
           id: cut.id,

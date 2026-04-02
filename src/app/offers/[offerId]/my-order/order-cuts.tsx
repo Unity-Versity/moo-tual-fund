@@ -75,18 +75,35 @@ export function OrderCuts({
   const noPrepGrouped = groupByCategory(noPrepCuts);
   const prepGrouped = groupByCategory(prepCuts);
 
-  // Deduplicate cuts for display (show each unique cut once, not per-slot)
-  function deduplicateCuts(items: SlotCutWithJoins[]): SlotCutWithJoins[] {
-    const seen = new Set<string>();
-    return items.filter((sc) => {
+  // Aggregate cuts across slots: sum weights for the same cut+portion
+  function aggregateCuts(items: SlotCutWithJoins[]): SlotCutWithJoins[] {
+    const map = new Map<string, SlotCutWithJoins>();
+    for (const sc of items) {
       const key = `${sc.cut_id}-${sc.portion_number}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, { ...sc });
+      } else {
+        // Sum actual weights across slots
+        if (sc.actual_weight_kg != null) {
+          existing.actual_weight_kg =
+            (Number(existing.actual_weight_kg) || 0) + Number(sc.actual_weight_kg);
+        }
+        // Sum estimated weights across slots
+        if (sc.cut.est_weight_per_slot_kg != null) {
+          existing.cut = {
+            ...existing.cut,
+            est_weight_per_slot_kg:
+              (Number(existing.cut.est_weight_per_slot_kg) || 0) +
+              Number(sc.cut.est_weight_per_slot_kg),
+          };
+        }
+      }
+    }
+    return Array.from(map.values());
   }
 
-  const bbqDeduplicated = deduplicateCuts(bbqCuts);
+  const bbqDeduplicated = aggregateCuts(bbqCuts);
 
   return (
     <div className="space-y-6">
@@ -145,7 +162,7 @@ export function OrderCuts({
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {group.label}
               </h4>
-              {deduplicateCuts(group.items).map((sc) => {
+              {aggregateCuts(group.items).map((sc) => {
                 const weight = formatWeight(
                   sc.actual_weight_kg ?? sc.cut.est_weight_per_slot_kg,
                   sc.actual_weight_kg == null && isEstimate
