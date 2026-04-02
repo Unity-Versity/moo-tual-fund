@@ -14,8 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, ChevronRight } from "lucide-react";
-import { addCut, deleteCut, addPrepOption, deletePrepOption } from "../../../actions";
+import { Loader2, Plus, Trash2, Check, ChevronRight } from "lucide-react";
+import { addCut, deleteCut, addPrepOption, deletePrepOption, updateCutEstWeight } from "../../../actions";
 import type { OfferCut, OfferPrepOption } from "@/lib/types";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -35,10 +35,12 @@ export default function AdminOfferCutsPage() {
   const offerId = params.offerId as string;
 
   const [cuts, setCuts] = useState<(OfferCut & { prep_options: OfferPrepOption[] })[]>([]);
+  const [totalSlots, setTotalSlots] = useState(1);
   const [isPending, startTransition] = useTransition();
   const [addingPrepFor, setAddingPrepFor] = useState<string | null>(null);
   const [category, setCategory] = useState("steak");
   const [isProcessable, setIsProcessable] = useState("false");
+  const [savedCutIds, setSavedCutIds] = useState<Set<string>>(new Set());
   const formRef = useRef<HTMLFormElement>(null);
 
   const loadCuts = useCallback(() => {
@@ -55,13 +57,27 @@ export default function AdminOfferCutsPage() {
 
   useEffect(() => {
     loadCuts();
-  }, [loadCuts]);
+    const supabase = createClient();
+    supabase
+      .from("offers")
+      .select("total_slots")
+      .eq("id", offerId)
+      .single()
+      .then(({ data }) => {
+        if (data) setTotalSlots(data.total_slots);
+      });
+  }, [loadCuts, offerId]);
 
   function handleAddCut(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     formData.set("category", category);
     formData.set("is_processable", isProcessable);
+
+    // Convert total weight to per-slot weight
+    const totalWeight = Number(formData.get("total_weight"));
+    formData.delete("total_weight");
+    formData.set("est_weight_per_slot_kg", String(totalWeight / totalSlots));
 
     startTransition(async () => {
       const result = await addCut(offerId, formData);
@@ -114,7 +130,35 @@ export default function AdminOfferCutsPage() {
     });
   }
 
-  const totalWeight = cuts.reduce((s, c) => s + Number(c.est_weight_per_slot_kg), 0);
+  function handleWeightEdit(cutId: string, value: string) {
+    const totalWeight = value === "" ? null : Number(value);
+    if (totalWeight == null || isNaN(totalWeight)) return;
+
+    const perSlot = totalWeight / totalSlots;
+
+    startTransition(async () => {
+      const result = await updateCutEstWeight(offerId, cutId, perSlot);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        setCuts((prev) =>
+          prev.map((c) =>
+            c.id === cutId ? { ...c, est_weight_per_slot_kg: perSlot } : c
+          )
+        );
+        setSavedCutIds((prev) => new Set(prev).add(cutId));
+        setTimeout(() => {
+          setSavedCutIds((prev) => {
+            const next = new Set(prev);
+            next.delete(cutId);
+            return next;
+          });
+        }, 2000);
+      }
+    });
+  }
+
+  const totalWeightPerSlot = cuts.reduce((s, c) => s + Number(c.est_weight_per_slot_kg), 0);
 
   return (
     <div className="space-y-4">
@@ -150,8 +194,8 @@ export default function AdminOfferCutsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Weight/Slot (kg)</Label>
-                <Input type="number" step="0.1" name="est_weight_per_slot_kg" placeholder="2.0" required />
+                <Label>Total Weight (kg)</Label>
+                <Input type="number" step="0.1" name="total_weight" placeholder="e.g. 16" required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -180,7 +224,7 @@ export default function AdminOfferCutsPage() {
 
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium">
-          {cuts.length} cuts &bull; ~{totalWeight.toFixed(1)}kg per slot
+          {cuts.length} cuts &bull; ~{totalWeightPerSlot.toFixed(1)}kg per slot &bull; ~{(totalWeightPerSlot * totalSlots).toFixed(1)}kg total
         </span>
       </div>
 
@@ -188,8 +232,8 @@ export default function AdminOfferCutsPage() {
         {cuts.map((cut) => (
           <Card key={cut.id}>
             <CardContent className="p-3">
-              <div className="flex items-start justify-between">
-                <div>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold">{cut.name}</p>
                     <Badge variant="outline" className="text-xs">
@@ -197,17 +241,34 @@ export default function AdminOfferCutsPage() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {cut.est_weight_per_slot_kg}kg &bull;{" "}
+                    {Number(cut.est_weight_per_slot_kg).toFixed(2)}kg/slot &bull;{" "}
                     {cut.portions_per_slot} portion{cut.portions_per_slot > 1 ? "s" : ""}
                     {cut.is_processable && " \u2022 Has prep options"}
                   </p>
                 </div>
-                <Button
-                  variant="ghost" size="icon" className="h-7 w-7 text-destructive"
-                  onClick={() => handleDeleteCut(cut.id)} disabled={isPending}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  {savedCutIds.has(cut.id) && (
+                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  )}
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    placeholder="—"
+                    defaultValue={(Number(cut.est_weight_per_slot_kg) * totalSlots).toFixed(1)}
+                    key={`${cut.id}-${totalSlots}`}
+                    onBlur={(e) => handleWeightEdit(cut.id, e.target.value)}
+                    className="w-20 text-right text-sm"
+                    disabled={isPending}
+                  />
+                  <span className="text-xs text-muted-foreground">kg</span>
+                  <Button
+                    variant="ghost" size="icon" className="h-7 w-7 text-destructive"
+                    onClick={() => handleDeleteCut(cut.id)} disabled={isPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
 
               {cut.is_processable && (

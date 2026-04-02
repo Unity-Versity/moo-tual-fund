@@ -534,6 +534,24 @@ export async function deletePrepOption(offerId: string, id: string) {
   return { success: true };
 }
 
+export async function updateCutEstWeight(offerId: string, cutId: string, estWeightPerSlot: number) {
+  await requireAdmin();
+  const supabase = await createServiceRoleClient();
+
+  const { error } = await supabase
+    .from("offer_cuts")
+    .update({ est_weight_per_slot_kg: estWeightPerSlot })
+    .eq("id", cutId)
+    .eq("offer_id", offerId);
+
+  if (error) return { error: "Failed to update weight." };
+
+  revalidatePath(`/admin/offers/${offerId}/cuts`);
+  revalidatePath(`/offers/${offerId}`);
+  revalidatePath(`/offers/${offerId}/my-order`);
+  return { success: true };
+}
+
 // ── Weights (offer-scoped) ──────────────────────────────
 
 export async function updateCutTotalWeight(offerId: string, cutId: string, animalId: string, totalWeight: number | null) {
