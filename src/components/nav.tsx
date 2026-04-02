@@ -9,8 +9,7 @@ import type { SessionData } from "@/lib/types";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
-  { href: "/my-order", label: "My Order" },
-  { href: "/costs", label: "Costs" },
+  { href: "/offers", label: "Offers" },
 ];
 
 export function Nav({ session }: { session: SessionData | null }) {
@@ -28,6 +27,11 @@ export function Nav({ session }: { session: SessionData | null }) {
 
   const displayName =
     session.type === "household" ? session.household_name : "Admin";
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  }
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-sm">
@@ -52,7 +56,7 @@ export function Nav({ session }: { session: SessionData | null }) {
               key={item.href}
               href={item.href}
               className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                pathname === item.href
+                isActive(item.href)
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
@@ -88,7 +92,7 @@ export function Nav({ session }: { session: SessionData | null }) {
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  pathname === item.href
+                  isActive(item.href)
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}

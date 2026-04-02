@@ -5,18 +5,30 @@ import { requireHousehold } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { suggestionSchema } from "@/lib/validations";
 
-export async function setShareCount(desired: number) {
+export async function setShareCount(offerId: string, desired: number) {
   const session = await requireHousehold();
   const supabase = await createServiceRoleClient();
 
-  if (desired < 0 || desired > 8 || !Number.isInteger(desired)) {
-    return { error: "Pick between 0 and 8 shares." };
+  // Get total_slots for this offer
+  const { data: offer } = await supabase
+    .from("offers")
+    .select("total_slots, status")
+    .eq("id", offerId)
+    .single();
+
+  if (!offer) return { error: "Offer not found." };
+  if (offer.status !== "open") return { error: "This offer is no longer accepting claims." };
+
+  const maxSlots = offer.total_slots;
+  if (desired < 0 || desired > maxSlots || !Number.isInteger(desired)) {
+    return { error: `Pick between 0 and ${maxSlots} shares.` };
   }
 
-  // How many slots does this household already have?
+  // How many slots does this household already have for this offer?
   const { data: mySlots } = await supabase
-    .from("slots")
+    .from("offer_slots")
     .select("id")
+    .eq("offer_id", offerId)
     .eq("household_id", session.household_id)
     .eq("is_claimed", true)
     .order("slot_number");
@@ -29,8 +41,9 @@ export async function setShareCount(desired: number) {
   if (diff > 0) {
     // Claim more slots
     const { data: available } = await supabase
-      .from("slots")
+      .from("offer_slots")
       .select("id")
+      .eq("offer_id", offerId)
       .eq("is_claimed", false)
       .order("slot_number")
       .limit(diff);
@@ -43,7 +56,7 @@ export async function setShareCount(desired: number) {
 
     // Claim the slots
     const { error: claimError } = await supabase
-      .from("slots")
+      .from("offer_slots")
       .update({
         household_id: session.household_id,
         is_claimed: true,
@@ -53,10 +66,11 @@ export async function setShareCount(desired: number) {
 
     if (claimError) return { error: "Failed to claim shares. Try again!" };
 
-    // Create slot_cuts for each new slot
+    // Create offer_slot_cuts for each new slot
     const { data: cuts } = await supabase
-      .from("cuts")
-      .select("id, portions_per_slot");
+      .from("offer_cuts")
+      .select("id, portions_per_slot")
+      .eq("offer_id", offerId);
 
     if (cuts && cuts.length > 0) {
       const slotCuts = slotIds.flatMap((slotId) =>
@@ -70,13 +84,13 @@ export async function setShareCount(desired: number) {
       );
 
       const { error: insertError } = await supabase
-        .from("slot_cuts")
+        .from("offer_slot_cuts")
         .insert(slotCuts);
 
       if (insertError) {
         // Rollback the claim
         await supabase
-          .from("slots")
+          .from("offer_slots")
           .update({ household_id: null, is_claimed: false, claimed_at: null })
           .in("id", slotIds);
         return { error: "Something went wrong setting up your cuts. Try again!" };
@@ -84,25 +98,26 @@ export async function setShareCount(desired: number) {
     }
   } else {
     // Release slots (remove from the end)
-    const toRelease = mySlots!.slice(diff); // diff is negative, so this takes the last |diff| items
+    const toRelease = mySlots!.slice(diff); // diff is negative
     const releaseIds = toRelease.map((s) => s.id);
 
-    await supabase.from("slot_cuts").delete().in("slot_id", releaseIds);
+    await supabase.from("offer_slot_cuts").delete().in("slot_id", releaseIds);
 
     const { error: releaseError } = await supabase
-      .from("slots")
+      .from("offer_slots")
       .update({ household_id: null, is_claimed: false, claimed_at: null })
       .in("id", releaseIds);
 
     if (releaseError) return { error: "Failed to release shares. Try again!" };
   }
 
-  revalidatePath("/my-order");
-  revalidatePath("/");
+  revalidatePath(`/offers/${offerId}/my-order`);
+  revalidatePath(`/offers/${offerId}`);
+  revalidatePath("/offers");
   return { success: true };
 }
 
-export async function updatePrepOption(slotCutId: string, prepOptionId: string | null) {
+export async function updatePrepOption(offerId: string, slotCutId: string, prepOptionId: string | null) {
   const session = await requireHousehold();
 
   if (!slotCutId) {
@@ -113,7 +128,7 @@ export async function updatePrepOption(slotCutId: string, prepOptionId: string |
 
   // Verify this slot_cut belongs to one of the caller's slots
   const { data: slotCut } = await supabase
-    .from("slot_cuts")
+    .from("offer_slot_cuts")
     .select("slot_id")
     .eq("id", slotCutId)
     .single();
@@ -123,7 +138,7 @@ export async function updatePrepOption(slotCutId: string, prepOptionId: string |
   }
 
   const { data: slot } = await supabase
-    .from("slots")
+    .from("offer_slots")
     .select("household_id")
     .eq("id", slotCut.slot_id)
     .single();
@@ -133,7 +148,7 @@ export async function updatePrepOption(slotCutId: string, prepOptionId: string |
   }
 
   const { error } = await supabase
-    .from("slot_cuts")
+    .from("offer_slot_cuts")
     .update({ selected_prep_option_id: prepOptionId || null })
     .eq("id", slotCutId);
 
@@ -141,11 +156,11 @@ export async function updatePrepOption(slotCutId: string, prepOptionId: string |
     return { error: "Failed to update. Give it another go!" };
   }
 
-  revalidatePath("/my-order");
+  revalidatePath(`/offers/${offerId}/my-order`);
   return { success: true };
 }
 
-export async function submitSuggestion(message: string) {
+export async function submitSuggestion(offerId: string, message: string) {
   const session = await requireHousehold();
 
   const parsed = suggestionSchema.safeParse({ message });
@@ -156,6 +171,7 @@ export async function submitSuggestion(message: string) {
   const supabase = await createServiceRoleClient();
   const { error } = await supabase.from("suggestions").insert({
     household_id: session.household_id,
+    offer_id: offerId,
     message: parsed.data.message,
   });
 
@@ -163,6 +179,6 @@ export async function submitSuggestion(message: string) {
     return { error: "Failed to submit. Try again!" };
   }
 
-  revalidatePath("/my-order");
+  revalidatePath(`/offers/${offerId}/my-order`);
   return { success: true };
 }

@@ -7,19 +7,24 @@ import { Weight, DollarSign, Tag, Lock } from "lucide-react";
 import type { Expense } from "@/lib/types";
 import { splitExpenses, calcTotal } from "@/lib/costs";
 
-const TOTAL_SLOTS = 8;
-const MIN_WEIGHT = 140;
-const MAX_WEIGHT = 160;
+const MIN_WEIGHT = 100;
+const MAX_WEIGHT = 200;
 
 export function CostCalculator({
   expenses,
   hangingWeight,
+  totalSlots,
+  shareSize,
+  weightsConfirmed,
 }: {
   expenses: Expense[];
   hangingWeight: number | null;
+  totalSlots: number;
+  shareSize: string;
+  weightsConfirmed?: boolean;
 }) {
   const isLocked = hangingWeight !== null;
-  const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? 300);
+  const [dressedWeight, setDressedWeight] = useState(hangingWeight ?? 150);
   const activeWeight = isLocked ? hangingWeight : dressedWeight;
 
   const { fixed, processingRate } = splitExpenses(expenses);
@@ -29,12 +34,14 @@ export function CostCalculator({
     activeWeight
   );
 
-  const costPerSlot = total / TOTAL_SLOTS;
-  const weightPerSlot = activeWeight / TOTAL_SLOTS;
+  const costPerSlot = totalSlots > 0 ? total / totalSlots : 0;
+  const weightPerSlot = totalSlots > 0 ? activeWeight / totalSlots : 0;
   const costPerKg = weightPerSlot > 0 ? costPerSlot / weightPerSlot : 0;
 
   const fillPercent =
     ((activeWeight - MIN_WEIGHT) / (MAX_WEIGHT - MIN_WEIGHT)) * 100;
+
+  const estLabel = weightsConfirmed ? "" : " (est.)";
 
   if (fixed.length === 0 && processingRate === 0) {
     return (
@@ -113,7 +120,7 @@ export function CostCalculator({
               {weightPerSlot.toFixed(1)}kg
             </p>
             <p className="text-[11px] leading-tight text-muted-foreground">
-              Your 1/8th
+              Your {shareSize}{estLabel}
             </p>
           </CardContent>
         </Card>
@@ -124,7 +131,7 @@ export function CostCalculator({
               ${costPerSlot.toFixed(0)}
             </p>
             <p className="text-[11px] leading-tight text-muted-foreground">
-              Per Share
+              Per Share{estLabel}
             </p>
           </CardContent>
         </Card>
@@ -135,7 +142,7 @@ export function CostCalculator({
               ${costPerKg.toFixed(2)}
             </p>
             <p className="text-[11px] leading-tight text-muted-foreground">
-              Per kg
+              Per kg{estLabel}
             </p>
           </CardContent>
         </Card>
@@ -143,7 +150,7 @@ export function CostCalculator({
 
       <p className="text-center text-xs text-muted-foreground">
         {isLocked
-          ? `Based on ${hangingWeight}kg confirmed dressed weight, split 8 ways.`
+          ? `Based on ${hangingWeight}kg confirmed dressed weight, split ${totalSlots} ways.`
           : "Drag the slider to estimate costs at different dressed weights. Numbers lock once the actual weight is confirmed."}{" "}
         The estimated kg per share is dressed weight (includes bone and fat — actual take-home meat will be less).
       </p>

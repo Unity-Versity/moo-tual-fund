@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { COW_STAGES } from "@/lib/types";
+import { OFFER_STAGES, ANIMAL_TYPES, SHARE_SIZES } from "@/lib/types";
 
 // ── Auth ───────────────────────────────────────────────
 
@@ -24,16 +24,24 @@ export const adminLoginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-// ── Admin: Status ──────────────────────────────────────
+// ── Admin: Offers ─────────────────────────────────────
 
-export const updateCowStatusSchema = z.object({
-  stage: z.enum(COW_STAGES),
+export const createOfferSchema = z.object({
+  title: z.string().trim().min(1, "Title is required"),
+  description: z.string().optional().default(""),
+  animal_type: z.enum(ANIMAL_TYPES).default("beef"),
+  animal_count: z.coerce.number().int().min(1).default(1),
+  share_size: z.enum(SHARE_SIZES).default("1/4"),
+  source_info: z.string().optional().default(""),
+});
+
+export const updateOfferStatusSchema = z.object({
+  stage: z.enum(OFFER_STAGES),
   est_sacrifice_date: z.string().optional().default(""),
-  hanging_weight_kg: z.string().optional().default(""),
-  total_take_home_kg: z.string().optional().default(""),
   est_raw_pickup: z.string().optional().default(""),
   est_smoked_pickup: z.string().optional().default(""),
   banner_message: z.string().optional().default(""),
+  status: z.enum(["draft", "open", "closed", "complete"]).optional(),
 });
 
 // ── Admin: Households ──────────────────────────────────

@@ -2,10 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { Nav } from "@/components/nav";
-import { StatusBanner } from "@/components/status-banner";
 import { getSession } from "@/lib/session";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { CowStatus } from "@/lib/types";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,11 +24,11 @@ export const metadata: Metadata = {
     template: "%s · Moo-tual Fund",
   },
   description:
-    "A whole steer, split between mates. No shop, no middlemen — just beef.",
+    "Community bulk buying — whole animals, split between mates. No shop, no middlemen.",
   openGraph: {
     title: "Moo-tual Fund 🐄",
     description:
-      "A whole steer, split between mates. Claim your share, pick your cuts, fill your freezer.",
+      "Community bulk buying — whole animals, split between mates. Claim your share, pick your cuts, fill your freezer.",
     siteName: "Moo-tual Fund",
     type: "website",
     images: [
@@ -39,7 +36,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Moo-tual Fund — A whole steer, split between mates",
+        alt: "Moo-tual Fund — Community bulk buying",
       },
     ],
   },
@@ -47,7 +44,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Moo-tual Fund 🐄",
     description:
-      "A whole steer, split between mates. Claim your share, pick your cuts, fill your freezer.",
+      "Community bulk buying — whole animals, split between mates. Claim your share, pick your cuts, fill your freezer.",
     images: ["/opengraph-image"],
   },
 };
@@ -57,29 +54,12 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-async function getCowStatus(): Promise<CowStatus | null> {
-  try {
-    const supabase = await createServerSupabaseClient();
-    const { data } = await supabase
-      .from("cow_status")
-      .select("*")
-      .limit(1)
-      .single();
-    return data as CowStatus | null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [session, cowStatus] = await Promise.all([
-    getSession(),
-    getCowStatus(),
-  ]);
+  const session = await getSession();
 
   return (
     <html
@@ -88,7 +68,6 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <Nav session={session} />
-        <StatusBanner status={cowStatus} />
         <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-6">
           {children}
         </main>

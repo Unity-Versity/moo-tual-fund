@@ -17,7 +17,13 @@ const STATUS_STYLES: Record<string, string> = {
   resolved: "bg-green-100 text-green-800",
 };
 
-export function SuggestionForm({ suggestions }: { suggestions: Suggestion[] }) {
+export function SuggestionForm({
+  offerId,
+  suggestions,
+}: {
+  offerId: string;
+  suggestions: Suggestion[];
+}) {
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -26,7 +32,7 @@ export function SuggestionForm({ suggestions }: { suggestions: Suggestion[] }) {
     if (!message.trim()) return;
 
     startTransition(async () => {
-      const result = await submitSuggestion(message);
+      const result = await submitSuggestion(offerId, message);
       if (result.error) {
         toast.error(result.error);
       } else {

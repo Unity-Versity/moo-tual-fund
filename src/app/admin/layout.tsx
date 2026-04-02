@@ -2,16 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Beef, ClipboardList, DollarSign, Home, Scissors, Users, Wallet, Weight } from "lucide-react";
+import { Beef, Home, ShoppingBag, Users } from "lucide-react";
 
 const ADMIN_LINKS = [
   { href: "/admin", label: "Overview", icon: Home },
-  { href: "/admin/status", label: "Status", icon: BarChart3 },
-  { href: "/admin/cuts", label: "Cuts", icon: Scissors },
-  { href: "/admin/weights", label: "Weights", icon: Weight },
-  { href: "/admin/orders", label: "Orders", icon: ClipboardList },
-  { href: "/admin/expenses", label: "Expenses", icon: DollarSign },
-  { href: "/admin/payments", label: "Payments", icon: Wallet },
+  { href: "/admin/offers", label: "Offers", icon: ShoppingBag },
   { href: "/admin/households", label: "Households", icon: Users },
 ];
 
@@ -31,7 +26,9 @@ export default function AdminLayout({
 
       <nav className="flex gap-1 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none">
         {ADMIN_LINKS.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href;
+          const isActive = href === "/admin"
+            ? pathname === "/admin"
+            : pathname.startsWith(href);
           return (
             <Link
               key={href}
