@@ -98,6 +98,11 @@ export default async function OfferDetailPage({
   const availableSlots = slots.length - claimedSlots.length;
   const currentStageIndex = OFFER_STAGES.indexOf(offer.stage);
 
+  const householdId = session.type === "household" ? session.household_id : null;
+  const hasMyShares = householdId
+    ? slots.some((s) => s.household_id === householdId)
+    : false;
+
   // Sum hanging weights across all animals for cost calculator
   const totalHangingWeight = animals.reduce(
     (sum, a) => sum + (a.hanging_weight_kg ? Number(a.hanging_weight_kg) : 0),
@@ -138,6 +143,23 @@ export default async function OfferDetailPage({
           </Badge>
         </div>
       </section>
+
+      {/* ── Page Nav ── */}
+      {hasMyShares && (
+        <div className="flex gap-2">
+          <Link href={`/offers/${offer.id}/my-order`}>
+            <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+              My Order
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </Link>
+          <Link href={`/offers/${offer.id}/costs`}>
+            <Button variant="outline">
+              Costs
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* ── Source Info ── */}
       {offer.source_info && (
